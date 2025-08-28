@@ -3,5 +3,5 @@ langchain
 langchain-aws
 boto3
 botocore
-aws-cli
+awscli
 python-dotenv
