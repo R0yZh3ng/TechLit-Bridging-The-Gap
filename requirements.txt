@@ -1,7 +1,4 @@
-flask
-langchain
-langchain-aws
-boto3
-botocore
-aws-cli
-python-dotenv
+Flask==2.3.3
+Flask-CORS==4.0.0
+python-dotenv==1.0.0
+Werkzeug==2.3.7
