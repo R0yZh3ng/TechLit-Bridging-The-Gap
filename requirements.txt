@@ -2,4 +2,6 @@ flask
 langchain
 langchain-aws
 boto3
+botocore
+aws-cli
 python-dotenv
