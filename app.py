@@ -9,17 +9,27 @@ load_dotenv()
 app = Flask(__name__)
 
 # Load config from .env or defaults
-MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "meta.llama3-1-8b-instruct-v1:0")
-REGION = os.getenv("AWS_REGION", "us-west-1")  # must be us-east-1, us-west-2, or ap-southeast-1
+MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "meta.llama3-8b-instruct-v1:0")
+REGION = os.getenv("AWS_REGION", "us-west-2")  # Updated to match your account region
 
-# Initialize Bedrock
+# Initialize Bedrock with default credentials
 try:
+    # Create boto3 session with default credential chain
+    import boto3
+    session = boto3.Session()
+    
+    # Use bedrock-runtime client for model invocation
+    bedrock_client = session.client('bedrock-runtime', region_name=REGION)
+    
     llm = BedrockLLM(
         model_id=MODEL_ID,
-        region_name=REGION
+        region_name=REGION,
+        client=bedrock_client
     )
     bedrock_available = True
     print(f"✅ Bedrock initialized successfully with {MODEL_ID} in {REGION}")
+    print(f"   Using default AWS credentials from: {session.get_credentials().method}")
+    print(f"   Client: {bedrock_client.__class__.__name__}")
 except Exception as e:
     print(f"❌ Bedrock initialization failed: {e}")
     llm = None
