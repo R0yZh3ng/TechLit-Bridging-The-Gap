@@ -387,9 +387,16 @@ textarea:focus {
 .login-container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.login-main {
+  flex: 1;
+  max-width: 400px;
 }
 
 .login-card {
@@ -455,4 +462,241 @@ textarea:focus {
 
 .logout-btn:hover {
   background: #c82333;
+}
+
+/* Password Strength Sidebar */
+.password-sidebar {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.sidebar-header h3 {
+  color: #333;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.toggle-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.toggle-btn:hover {
+  background: #5a6fd8;
+}
+
+.password-input-container {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.password-strength {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 5px;
+  background: #f8f9fa;
+}
+
+.password-strength.weak {
+  border-left: 4px solid #dc3545;
+}
+
+.password-strength.medium {
+  border-left: 4px solid #ffc107;
+}
+
+.password-strength.strong {
+  border-left: 4px solid #28a745;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.strength-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #dc3545, #ffc107, #28a745);
+  transition: width 0.3s ease;
+}
+
+.strength-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.password-feedback {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.password-feedback h4 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.strength-checklist {
+  list-style: none;
+  padding: 0;
+}
+
+.strength-checklist li {
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.strength-checklist li.pass {
+  color: #28a745;
+}
+
+.strength-checklist li.warning {
+  color: #ffc107;
+}
+
+.strength-checklist li.fail {
+  color: #dc3545;
+}
+
+.password-tips {
+  border-top: 2px solid #f8f9fa;
+  padding-top: 1.5rem;
+}
+
+.password-tips h4 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.password-suggestions {
+  margin-bottom: 1.5rem;
+}
+
+.password-suggestion {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #667eea;
+}
+
+.suggestion-password {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.suggestion-password code {
+  background: #e9ecef;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+.copy-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.3s;
+}
+
+.copy-btn:hover {
+  background: #5a6fd8;
+}
+
+.suggestion-explanation {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.security-tips, .security-warnings {
+  margin-bottom: 1.5rem;
+}
+
+.security-tips ul, .security-warnings ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.security-tips li, .security-warnings li {
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.security-tips li strong {
+  color: #333;
+}
+
+.security-warnings {
+  background: #fff3cd;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.security-warnings h4 {
+  color: #856404;
+}
+
+.security-warnings li {
+  color: #856404;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+  
+  .login-main {
+    max-width: 100%;
+  }
+  
+  .password-sidebar {
+    width: 100%;
+    max-width: 400px;
+  }
 }
