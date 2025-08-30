@@ -2,18 +2,21 @@
 # Copy this file to .env and fill in your AWS credentials
 
 # AWS Credentials (REQUIRED)
+# Need access to Bedrock and Rekognition services
 AWS_ACCESS_KEY_ID=your_access_key_here
 AWS_SECRET_ACCESS_KEY=your_secret_key_here
 
 # AWS Region (OPTIONAL - defaults to us-west-2)
+# Ensure Bedrock and Rekognition are available in your region
 AWS_REGION=us-west-2
 
-# Bedrock Model ID (OPTIONAL - defaults to meta.llama3-8b-instruct-v1:0)
+# Bedrock Model ID for text analysis (OPTIONAL - defaults to meta.llama3-8b-instruct-v1:0)
 BEDROCK_MODEL_ID=meta.llama3-8b-instruct-v1:0
 
 # Flask Configuration (OPTIONAL)
 FLASK_ENV=development
 FLASK_DEBUG=true
 
-# JWT Configuration (OPTIONAL - defaults to 'your-secret-key-change-this')
-JWT_SECRET_KEY=your-secret-key-change-this
+# Security Keys (OPTIONAL - change in production)
+SECRET_KEY=your-flask-secret-key-change-this
+JWT_SECRET_KEY=your-jwt-secret-key-change-this

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
+import ImageAnalyzer from '../components/ImageAnalyzer';
 
 function Home() {
   const { language, t } = useLanguage();
@@ -76,6 +77,8 @@ function Home() {
             </div>
           )}
         </div>
+
+        <ImageAnalyzer />
 
         <h2 className="section-title">
           <i className="fas fa-lightbulb"></i> {t('practice_examples')}

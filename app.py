@@ -7,15 +7,45 @@ import os
 from dotenv import load_dotenv
 import re
 from models import db, User, AnalysisHistory
-from googletrans import Translator
-from langdetect import detect
-
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
-translator = Translator()
+
+# Static translations
+TRANSLATIONS = {
+    'es': {
+        'home': 'Inicio',
+        'learn': 'Aprender',
+        'practice': 'Práctica',
+        'about': 'Acerca de',
+        'logout': 'Cerrar sesión',
+        'fraud_detection_trainer': 'Entrenador de Detección de Fraude',
+        'learn_to_identify': 'Aprende a identificar correos fraudulentos y artículos de noticias con análisis impulsado por IA',
+        'text_analyzer': 'Analizador de Texto',
+        'paste_suspicious': 'Pega texto sospechoso a continuación para análisis instantáneo de fraude:',
+        'placeholder': 'Pega correo o texto de noticias aquí...',
+        'analyze_button': 'Analizar por Fraude',
+        'analyzing': 'Analizando...',
+        'practice_examples': 'Ejemplos de Práctica'
+    },
+    'zh': {
+        'home': '首页',
+        'learn': '学习',
+        'practice': '练习',
+        'about': '关于',
+        'logout': '登出',
+        'fraud_detection_trainer': '欺诈检测训练器',
+        'learn_to_identify': '学习使用AI分析识别欺诈邮件和新闻文章',
+        'text_analyzer': '文本分析器',
+        'paste_suspicious': '在下方粘贴可疑文本进行即时欺诈分析：',
+        'placeholder': '在此粘贴邮件或新闻文本...',
+        'analyze_button': '分析欺诈',
+        'analyzing': '分析中...',
+        'practice_examples': '练习示例'
+    }
+}
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scamsense.db'
@@ -45,6 +75,36 @@ try:
     session = boto3.Session()
     
     bedrock_client = session.client('bedrock-runtime', region_name=REGION)
+    bedrock_list_client = session.client('bedrock', region_name=REGION)
+    
+    # Check available vision models
+    try:
+        models_response = bedrock_list_client.list_foundation_models()
+        available_vision_models = []
+        
+        for model in models_response['modelSummaries']:
+            input_modalities = model.get('inputModalities', [])
+            provider = model.get('providerName', '')
+            
+            # Look for non-Anthropic vision models
+            if 'IMAGE' in input_modalities and provider.lower() != 'anthropic':
+                available_vision_models.append({
+                    'id': model['modelId'],
+                    'name': model['modelName'],
+                    'provider': provider
+                })
+                print(f"✅ Found vision model: {model['modelName']} ({model['modelId']})")
+        
+        vision_available = len(available_vision_models) > 0
+        if vision_available:
+            print(f"✅ {len(available_vision_models)} non-Anthropic vision models available")
+        else:
+            print("⚠️ No non-Anthropic vision models found")
+            
+    except Exception as e:
+        print(f"⚠️ Could not check vision models: {e}")
+        available_vision_models = []
+        vision_available = False
     
     llm = BedrockLLM(
         model_id=MODEL_ID,
@@ -57,11 +117,15 @@ except Exception as e:
     print(f"❌ Bedrock initialization failed: {e}")
     llm = None
     bedrock_available = False
+    vision_available = False
     print("⚠️ Falling back to rule-based analysis")
 
 import re
 import json
 from datetime import datetime
+import base64
+from PIL import Image
+import io
 
 class ScamAnalyzer:
     def __init__(self):
@@ -183,6 +247,26 @@ class ScamAnalyzer:
             'timestamp': datetime.now().isoformat()
         }
     
+    def analyze_image(self, image_data):
+        """Analyze image for fraud indicators"""
+        risk_score = 0
+        warnings = []
+        
+        # Rule-based image analysis
+        if self._has_suspicious_image_patterns(image_data):
+            risk_score += 40
+            warnings.append("Suspicious visual elements detected")
+        
+        risk_level = self._calculate_risk_level(risk_score)
+        
+        return {
+            'risk_level': risk_level,
+            'risk_score': risk_score,
+            'warnings': warnings,
+            'recommendations': self._get_image_recommendations(risk_level),
+            'timestamp': datetime.now().isoformat()
+        }
+    
     def _is_suspicious_sender(self, sender):
         suspicious_domains = ['free-email.com', 'suspicious.net', 'fake-domain.org']
         return any(domain in sender.lower() for domain in suspicious_domains)
@@ -222,6 +306,46 @@ class ScamAnalyzer:
     def _has_suspicious_website_patterns(self, content):
         suspicious_indicators = ['free money', 'miracle cure', 'act now', 'limited time']
         return any(indicator in content.lower() for indicator in suspicious_indicators)
+    
+    def _has_suspicious_image_patterns(self, image_data):
+        """Basic image analysis - can be enhanced with ML models"""
+        try:
+            # Decode base64 image
+            image_bytes = base64.b64decode(image_data.split(',')[1])
+            image = Image.open(io.BytesIO(image_bytes))
+            
+            # Basic checks
+            width, height = image.size
+            
+            # Suspicious if image is very small (common in phishing)
+            if width < 100 or height < 100:
+                return True
+                
+            return False
+        except:
+            return True  # If we can't process the image, consider it suspicious
+    
+    def _get_image_recommendations(self, risk_level):
+        recommendations = {
+            'HIGH': [
+                'Do not trust this image',
+                'Verify information through official sources',
+                'Check for image manipulation signs',
+                'Report if received via suspicious channels'
+            ],
+            'MEDIUM': [
+                'Verify image authenticity',
+                'Check original source',
+                'Look for inconsistencies',
+                'Be cautious of claims made'
+            ],
+            'LOW': [
+                'Image appears normal',
+                'Still verify any claims made',
+                'Check source credibility'
+            ]
+        }
+        return recommendations.get(risk_level, [])
     
     def _calculate_risk_level(self, score):
         if score >= 60:
@@ -324,26 +448,7 @@ def login():
         print(f"Login error: {e}")
         return jsonify({'error': str(e)}), 500
 
-def detect_and_translate(text, target_lang='en'):
-    """Detect language and translate if needed"""
-    try:
-        detected_lang = detect(text)
-        if detected_lang != target_lang:
-            translated = translator.translate(text, src=detected_lang, dest=target_lang)
-            return translated.text, detected_lang
-        return text, detected_lang
-    except:
-        return text, 'en'  # Default to English if detection fails
 
-def translate_response(response, target_lang):
-    """Translate response back to original language"""
-    if target_lang == 'en':
-        return response
-    try:
-        translated = translator.translate(response, src='en', dest=target_lang)
-        return translated.text
-    except:
-        return response  # Return original if translation fails
 
 @app.route('/analyze', methods=['POST'])
 def analyze_text_main():
@@ -460,7 +565,30 @@ def analyze_website():
         
         result = analyzer.analyze_website(url, content)
         return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
+@app.route('/api/analyze/image', methods=['POST'])
+def analyze_image():
+    try:
+        data = request.json
+        image_data = data.get('image', '')
+        
+        if not image_data:
+            return jsonify({'error': 'Missing required field: image'}), 400
+        
+        # Use Bedrock vision model if available
+        if bedrock_available:
+            try:
+                result = analyze_image_with_bedrock(image_data)
+                return jsonify(result)
+            except Exception as e:
+                print(f"Bedrock vision analysis failed: {e}")
+        
+        # Fallback to rule-based analysis
+        result = analyzer.analyze_image(image_data)
+        return jsonify(result)
     
     except Exception as e:
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
@@ -473,6 +601,159 @@ def get_history():
     analyses = AnalysisHistory.query.filter_by(user_id=user_id).order_by(AnalysisHistory.created_at.desc()).limit(20).all()
     return jsonify([analysis.to_dict() for analysis in analyses])
 
+
+def analyze_image_with_bedrock(image_data):
+    """Analyze image using Amazon Rekognition"""
+    try:
+        # Handle different base64 formats
+        if ',' in image_data:
+            image_b64 = image_data.split(',')[1]
+        else:
+            image_b64 = image_data
+            
+        image_bytes = base64.b64decode(image_b64)
+        image = Image.open(io.BytesIO(image_bytes))
+        width, height = image.size
+        file_size = len(image_bytes)
+        
+        # Use Amazon Rekognition for image analysis
+        rekognition = session.client('rekognition', region_name=REGION)
+        
+        # Detect text in image
+        text_response = rekognition.detect_text(Image={'Bytes': image_bytes})
+        detected_texts = [item['DetectedText'] for item in text_response.get('TextDetections', [])]
+        
+        # Detect labels/objects
+        label_response = rekognition.detect_labels(Image={'Bytes': image_bytes}, MaxLabels=20)
+        detected_labels = [(item['Name'], item['Confidence']) for item in label_response.get('Labels', [])]
+        
+        # Analyze for fraud indicators
+        fraud_score = 0
+        fraud_indicators = []
+        detailed_analysis = f"Amazon Rekognition analysis of {width}x{height} image ({file_size} bytes): "
+        
+        # Check detected text for fraud patterns
+        fraud_keywords = ['urgent', 'verify', 'suspended', 'winner', 'congratulations', 'prize', 'click here', 'act now', 'limited time']
+        suspicious_texts = []
+        
+        for text in detected_texts:
+            if any(keyword in text.lower() for keyword in fraud_keywords):
+                fraud_score += 25
+                suspicious_texts.append(text)
+        
+        if suspicious_texts:
+            fraud_indicators.append(f'Suspicious text detected: {", ".join(suspicious_texts[:3])}')
+            detailed_analysis += f"Found {len(suspicious_texts)} suspicious text elements including urgency tactics and fraud keywords. "
+        
+        # Check for document-like content
+        document_labels = ['document', 'text', 'paper', 'receipt', 'invoice', 'form', 'id card', 'license']
+        found_documents = [label for label, conf in detected_labels if label.lower() in document_labels and conf > 70]
+        
+        if found_documents:
+            fraud_score += 15
+            fraud_indicators.append(f'Document detected: {found_documents[0]} - verify authenticity through official channels')
+            detailed_analysis += f"Detected document-like content: {', '.join(found_documents)}. This could be a legitimate document or a fraudulent reproduction. "
+        
+        # Technical analysis for fraud patterns
+        if width < 300 or height < 300:
+            fraud_score += 20
+            fraud_indicators.append(f'Small image size ({width}x{height}) - commonly used in phishing emails to evade detection')
+            detailed_analysis += "Small image dimensions are often used in phishing campaigns to bypass email security filters. "
+        
+        if file_size < 10000:
+            fraud_score += 10
+            fraud_indicators.append('Small file size indicates heavy compression or low quality - common in fraudulent images')
+            detailed_analysis += "Low file size suggests image compression that may hide manipulation artifacts. "
+        
+        # Check for QR codes or barcodes
+        qr_labels = [label for label, conf in detected_labels if 'qr' in label.lower() or 'barcode' in label.lower()]
+        if qr_labels:
+            fraud_score += 15
+            fraud_indicators.append('QR code or barcode detected - verify destination before scanning')
+            detailed_analysis += "QR codes can redirect to malicious websites or download harmful content. "
+        
+        # High confidence labels analysis
+        high_conf_labels = [label for label, conf in detected_labels if conf > 90]
+        if high_conf_labels:
+            detailed_analysis += f"High-confidence visual elements detected: {', '.join(high_conf_labels[:5])}. "
+        
+        if detected_texts:
+            detailed_analysis += f"Text elements found: {', '.join(detected_texts[:3])}{'...' if len(detected_texts) > 3 else ''}. "
+        
+        risk_level = 'HIGH' if fraud_score >= 50 else 'MEDIUM' if fraud_score >= 25 else 'LOW'
+        
+        return {
+            'risk_level': risk_level,
+            'risk_score': min(fraud_score, 100),
+            'detailed_analysis': detailed_analysis,
+            'fraud_indicators': fraud_indicators if fraud_indicators else ['No specific fraud indicators detected in image analysis'],
+            'warnings': fraud_indicators,
+            'recommendations': [
+                'Verify any text claims through official channels',
+                'Check document authenticity if official-looking',
+                'Be cautious of urgent language or prize notifications',
+                'Do not scan QR codes from untrusted sources',
+                'Cross-reference with known legitimate sources'
+            ],
+            'timestamp': datetime.now().isoformat(),
+            'analysis_method': 'Amazon-Rekognition',
+            'detected_text_count': len(detected_texts),
+            'detected_labels_count': len(detected_labels)
+        }
+        
+        # Enhanced rule-based fallback
+        risk_score = 30
+        warnings = []
+        detailed_analysis = f'Analyzed {width}x{height} pixel image ({file_size} bytes). '
+        
+        if width < 200 or height < 200:
+            risk_score += 25
+            warnings.append('Very small image size - commonly used in phishing emails')
+            detailed_analysis += 'Small image dimensions suggest this may be a low-quality screenshot or thumbnail, which is often used in fraudulent communications to evade detection. '
+        
+        if width > 1920 or height > 1080:
+            risk_score += 15
+            warnings.append('Unusually large image - possible full screenshot')
+            detailed_analysis += 'Large image size suggests this may be a full screenshot of a website or application, which could indicate phishing attempts. '
+        
+        if file_size < 10000:  # Less than 10KB
+            risk_score += 20
+            warnings.append('Very small file size - possible compressed or low-quality image')
+            detailed_analysis += 'Small file size combined with image dimensions suggests heavy compression or poor quality, common in fraudulent documents. '
+        
+        risk_level = 'HIGH' if risk_score >= 60 else 'MEDIUM' if risk_score >= 35 else 'LOW'
+        
+        return {
+            'risk_level': risk_level,
+            'risk_score': risk_score,
+            'detailed_analysis': detailed_analysis,
+            'fraud_indicators': warnings if warnings else ['Basic technical analysis completed'],
+            'warnings': warnings if warnings else ['Basic image validation completed'],
+            'recommendations': [
+                'Verify image source and authenticity through official channels',
+                'Check for signs of digital manipulation or editing',
+                'Be cautious of unsolicited images, especially with urgent requests',
+                'Cross-reference any claims made in the image with official sources'
+            ],
+            'timestamp': datetime.now().isoformat(),
+            'analysis_method': 'Enhanced-Rule-Based-Fallback',
+            'image_properties': f'{width}x{height}'
+        }
+        
+    except Exception as e:
+        print(f"Image analysis error: {e}")
+        print(f"Image data length: {len(image_data) if image_data else 0}")
+        print(f"Image data starts with: {image_data[:50] if image_data else 'None'}")
+        
+        return {
+            'risk_level': 'MEDIUM',
+            'risk_score': 50,
+            'warnings': [f'Image processing failed: {str(e)[:100]}'],
+            'recommendations': ['Check image format and try again', 'Manually verify image authenticity'],
+            'timestamp': datetime.now().isoformat(),
+            'analysis_method': 'Error-Fallback',
+            'error_details': str(e)
+        }
 
 def rule_based_analysis(text: str) -> str:
     text_lower = text.lower()
