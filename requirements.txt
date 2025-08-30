@@ -1,12 +1,5 @@
 flask
-langchain
 langchain-aws
+python-dotenv
 boto3
-botocore
-awscli
-libraries
-python-dotenv
-SpeechRecognition
-
-python-dotenv
-main
+flask-cors

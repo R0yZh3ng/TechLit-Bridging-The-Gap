@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from langchain_aws import BedrockLLM
 import os
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ import re
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 # Load config from .env or defaults
 MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "meta.llama3-8b-instruct-v1:0")
@@ -34,21 +36,8 @@ except Exception as e:
 
 
 @app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/learn')
-def learn():
-    return render_template('learn.html')
-
-@app.route('/practice')
-def practice():
-    return render_template('practice.html')
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
-
+def health_check():
+    return jsonify({'status': 'Backend is running', 'port': 8000})
 
 @app.route('/analyze', methods=['POST'])
 def analyze_text():
@@ -71,17 +60,12 @@ Response:"""
 
     if bedrock_available and llm:
         try:
-            print("➡️ Sending prompt to Bedrock...")
             response = llm.invoke(prompt)
-            print("✅ Bedrock response received")
-
             if hasattr(response, 'content'):
                 response = response.content
             elif isinstance(response, dict) and 'content' in response:
                 response = response['content']
-
         except Exception as e:
-            print(f"❌ Bedrock error: {e}")
             response = rule_based_analysis(text)
     else:
         response = rule_based_analysis(text)
