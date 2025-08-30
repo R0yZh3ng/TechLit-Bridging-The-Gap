@@ -252,6 +252,8 @@ class ScamAnalyzer:
         risk_score = 0
         warnings = []
         
+        
+        ##
         # Rule-based image analysis
         if self._has_suspicious_image_patterns(image_data):
             risk_score += 40
