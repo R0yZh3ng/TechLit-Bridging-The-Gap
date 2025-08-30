@@ -556,6 +556,29 @@ textarea:focus {
   border-radius: 10px;
 }
 
+.strength-indicator {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: white;
+  border: 2px solid #e9ecef;
+}
+
+.strength-indicator.weak {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.strength-indicator.medium {
+  border-color: #ffc107;
+  background: #fffbf0;
+}
+
+.strength-indicator.strong {
+  border-color: #28a745;
+  background: #f0fff4;
+}
+
 .password-feedback h4 {
   color: #333;
   margin-bottom: 1rem;
@@ -582,6 +605,84 @@ textarea:focus {
 
 .strength-checklist li.fail {
   color: #dc3545;
+}
+
+.weakness-explanation {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.weakness-explanation h5 {
+  color: #856404;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weakness-explanation p {
+  color: #856404;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.registration-blocked {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8d7da;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+}
+
+.registration-blocked p {
+  color: #721c24;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registration-warning {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.registration-warning p {
+  color: #856404;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registration-approved {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #d4edda;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.registration-approved p {
+  color: #155724;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .password-tips {

@@ -33,26 +33,35 @@ function Login({ onLogin }) {
     }
   ];
 
-  // Password strength checker
+  // Enhanced password strength checker
   const checkPasswordStrength = (password) => {
     let score = 0;
     let feedback = [];
+    let weaknesses = [];
 
-    if (password.length >= 12) {
+    // Length check
+    if (password.length >= 16) {
+      score += 3;
+      feedback.push("✓ Excellent length (16+ characters)");
+    } else if (password.length >= 12) {
       score += 2;
       feedback.push("✓ Good length (12+ characters)");
     } else if (password.length >= 8) {
       score += 1;
       feedback.push("⚠ Minimum length (8+ characters)");
+      weaknesses.push("Password is too short for optimal security");
     } else {
       feedback.push("✗ Too short (need 8+ characters)");
+      weaknesses.push("Password is too short");
     }
 
+    // Character variety checks
     if (/[A-Z]/.test(password)) {
       score += 1;
       feedback.push("✓ Contains uppercase letters");
     } else {
       feedback.push("✗ Missing uppercase letters");
+      weaknesses.push("Missing uppercase letters");
     }
 
     if (/[a-z]/.test(password)) {
@@ -60,6 +69,7 @@ function Login({ onLogin }) {
       feedback.push("✓ Contains lowercase letters");
     } else {
       feedback.push("✗ Missing lowercase letters");
+      weaknesses.push("Missing lowercase letters");
     }
 
     if (/[0-9]/.test(password)) {
@@ -67,6 +77,7 @@ function Login({ onLogin }) {
       feedback.push("✓ Contains numbers");
     } else {
       feedback.push("✗ Missing numbers");
+      weaknesses.push("Missing numbers");
     }
 
     if (/[^A-Za-z0-9]/.test(password)) {
@@ -74,25 +85,82 @@ function Login({ onLogin }) {
       feedback.push("✓ Contains special characters");
     } else {
       feedback.push("✗ Missing special characters");
+      weaknesses.push("Missing special characters");
     }
 
+    // Pattern checks
     if (!/(.)\1{2,}/.test(password)) {
       score += 1;
       feedback.push("✓ No repeated characters");
     } else {
       feedback.push("✗ Avoid repeated characters");
+      weaknesses.push("Contains repeated characters");
     }
 
-    return { score, feedback };
+    // Common weak patterns
+    if (/123|abc|qwe|asd|password|admin|user|test/i.test(password)) {
+      score -= 1;
+      feedback.push("✗ Avoid common patterns");
+      weaknesses.push("Contains common patterns");
+    }
+
+    // Sequential patterns
+    if (/123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz/i.test(password)) {
+      score -= 1;
+      feedback.push("✗ Avoid sequential patterns");
+      weaknesses.push("Contains sequential patterns");
+    }
+
+    // Personal info patterns (basic check)
+    if (/password|pass|user|admin|test|demo|guest/i.test(password)) {
+      score -= 1;
+      feedback.push("✗ Avoid common words");
+      weaknesses.push("Contains common words");
+    }
+
+    return { score, feedback, weaknesses };
   };
 
   const passwordStrength = checkPasswordStrength(password);
-  const strengthLevel = passwordStrength.score >= 5 ? 'strong' : passwordStrength.score >= 3 ? 'medium' : 'weak';
+  const strengthLevel = passwordStrength.score >= 6 ? 'strong' : passwordStrength.score >= 4 ? 'medium' : 'weak';
+
+  // Function to get detailed weakness explanation
+  const getWeaknessExplanation = (weaknesses) => {
+    if (weaknesses.length === 0) return null;
+    
+    const explanations = {
+      "Password is too short": "Short passwords are easily cracked by brute force attacks. Use at least 12 characters for better security.",
+      "Password is too short for optimal security": "While 8+ characters meet minimum requirements, 12+ characters provide much better protection.",
+      "Missing uppercase letters": "Uppercase letters increase password complexity and make it harder to guess.",
+      "Missing lowercase letters": "Lowercase letters are essential for password variety and security.",
+      "Missing numbers": "Numbers add complexity and make your password more resistant to dictionary attacks.",
+      "Missing special characters": "Special characters like @, #, $, % significantly increase password strength.",
+      "Contains repeated characters": "Repeated characters reduce password entropy and make it easier to crack.",
+      "Contains common patterns": "Common patterns like '123' or 'abc' are easily guessed by attackers.",
+      "Contains sequential patterns": "Sequential patterns are predictable and should be avoided.",
+      "Contains common words": "Common words like 'password' or 'admin' are easily guessed."
+    };
+
+    return weaknesses.map(weakness => explanations[weakness] || weakness).join(' ');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Check password strength for registration
+    if (isRegister) {
+      if (strengthLevel === 'weak') {
+        setError('Password is too weak. Please choose a stronger password.');
+        setLoading(false);
+        return;
+      } else if (strengthLevel === 'medium') {
+        setError('Password is moderately strong. For better security, please choose a strong password.');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const endpoint = isRegister ? '/register' : '/login';
@@ -185,6 +253,19 @@ function Login({ onLogin }) {
           {password && (
             <div className="password-feedback">
               <h4>Your Password Strength:</h4>
+              <div className={`strength-indicator ${strengthLevel}`}>
+                <div className="strength-bar">
+                  <div 
+                    className="strength-fill" 
+                    style={{width: `${Math.max(0, Math.min(100, (passwordStrength.score / 8) * 100))}%`}}
+                  ></div>
+                </div>
+                <span className="strength-text">
+                  {strengthLevel === 'strong' ? 'Strong' : 
+                   strengthLevel === 'medium' ? 'Moderate' : 'Weak'}
+                </span>
+              </div>
+              
               <ul className="strength-checklist">
                 {passwordStrength.feedback.map((item, index) => (
                   <li key={index} className={item.startsWith('✓') ? 'pass' : item.startsWith('⚠') ? 'warning' : 'fail'}>
@@ -192,6 +273,31 @@ function Login({ onLogin }) {
                   </li>
                 ))}
               </ul>
+
+              {passwordStrength.weaknesses.length > 0 && (
+                <div className="weakness-explanation">
+                  <h5><i className="fas fa-exclamation-triangle"></i> Why This Password is Weak:</h5>
+                  <p>{getWeaknessExplanation(passwordStrength.weaknesses)}</p>
+                </div>
+              )}
+
+              {strengthLevel === 'weak' && (
+                <div className="registration-blocked">
+                  <p><i className="fas fa-ban"></i> Registration blocked: Password is too weak</p>
+                </div>
+              )}
+
+              {strengthLevel === 'medium' && (
+                <div className="registration-warning">
+                  <p><i className="fas fa-exclamation-circle"></i> Warning: Consider using a stronger password</p>
+                </div>
+              )}
+
+              {strengthLevel === 'strong' && (
+                <div className="registration-approved">
+                  <p><i className="fas fa-check-circle"></i> Password strength approved for registration</p>
+                </div>
+              )}
             </div>
           )}
 
