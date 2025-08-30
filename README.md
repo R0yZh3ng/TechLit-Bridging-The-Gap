@@ -57,7 +57,7 @@ python aws_setup.py
 python app.py
 ```
 
-Visit http://localhost:5000 to use the application.
+Visit http://localhost:8000 to use the application.
 
 ## 🔒 Security Notes
 

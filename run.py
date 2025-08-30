@@ -51,11 +51,11 @@ def main():
         # Import and run the Flask app
         from app import app
         print("✅ Flask application loaded successfully")
-        print("🌐 Server will start at http://localhost:5000")
+        print("🌐 Server will start at http://localhost:8000")
         print("📱 Press Ctrl+C to stop the server")
         print("-" * 50)
         
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=True, host='0.0.0.0', port=8000)
         
     except ImportError as e:
         print(f"❌ Failed to import Flask application: {e}")
