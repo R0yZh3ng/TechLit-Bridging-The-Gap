@@ -8,11 +8,14 @@ function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPasswordTips, setShowPasswordTips] = useState(false);
+  const [showPasswordSuggestor, setShowPasswordSuggestor] = useState(false);
+  const [dynamicPasswords, setDynamicPasswords] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Strong password suggestions with explanations
   const strongPasswords = [
     {
-      password: "Dragon$2024!Secure",
+      password: "Dragon$2024!secure",
       explanation: "Uses uppercase, lowercase, numbers, symbols, and is 18+ characters long"
     },
     {
@@ -124,6 +127,70 @@ function Login({ onLogin }) {
   const passwordStrength = checkPasswordStrength(password);
   const strengthLevel = passwordStrength.score >= 6 ? 'strong' : passwordStrength.score >= 4 ? 'medium' : 'weak';
 
+    // Function to generate dynamic password suggestions
+  const generatePasswordSuggestions = () => {
+    const themes = [
+      { name: 'Nature', words: ['Mountain', 'Ocean', 'Forest', 'River', 'Desert'] },
+      { name: 'Animals', words: ['Dragon', 'Phoenix', 'Eagle', 'Lion', 'Tiger'] },
+      { name: 'Colors', words: ['Purple', 'Emerald', 'Sapphire', 'Crimson', 'Golden'] },
+      { name: 'Elements', words: ['Fire', 'Water', 'Earth', 'Wind', 'Lightning'] },
+      { name: 'Professions', words: ['Doctor', 'Engineer', 'Artist', 'Chef', 'Pilot'] }
+    ];
+    
+    const symbols = ['@', '#', '$', '%', '&', '*', '!', '?', '^', '+'];
+    const numbers = ['2024', '2025', '99', '42', '7', '13', '21', '100'];
+    const lowercaseWords = ['secure', 'safe', 'strong', 'power', 'guard'];
+    
+    const suggestions = [];
+    
+    themes.forEach(theme => {
+      const word = theme.words[Math.floor(Math.random() * theme.words.length)];
+      const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+      const number = numbers[Math.floor(Math.random() * numbers.length)];
+      const lowercaseWord = lowercaseWords[Math.floor(Math.random() * lowercaseWords.length)];
+      
+      // Generate variations that definitely meet strong criteria (score >= 6)
+      suggestions.push({
+        password: `${word}${symbol}${number}!${lowercaseWord}`,
+        explanation: `${theme.name} theme with uppercase, lowercase, numbers, and symbols`,
+        strength: 'strong'
+      });
+      
+      suggestions.push({
+        password: `${word}@${number}#${lowercaseWord}`,
+        explanation: `${theme.name} theme with mixed case and symbols`,
+        strength: 'strong'
+      });
+      
+      suggestions.push({
+        password: `${lowercaseWord}${symbol}${word}${number}`,
+        explanation: `${theme.name} theme with lowercase start and mixed characters`,
+        strength: 'strong'
+      });
+    });
+    
+    // Filter to ensure all passwords are actually strong
+    const strongSuggestions = suggestions.filter(suggestion => {
+      const strength = checkPasswordStrength(suggestion.password);
+      return strength.score >= 6;
+    });
+    
+    // Shuffle and return top 5, or all if less than 5
+    return strongSuggestions.sort(() => Math.random() - 0.5).slice(0, 5);
+  };
+
+  // Function to refresh dynamic passwords
+  const refreshDynamicPasswords = () => {
+    setDynamicPasswords(generatePasswordSuggestions());
+  };
+
+  // Function to initialize dynamic passwords when tips are first shown
+  const initializeDynamicPasswords = () => {
+    if (dynamicPasswords.length === 0) {
+      setDynamicPasswords(generatePasswordSuggestions());
+    }
+  };
+
   // Function to get detailed weakness explanation
   const getWeaknessExplanation = (weaknesses) => {
     if (weaknesses.length === 0) return null;
@@ -195,24 +262,46 @@ function Login({ onLogin }) {
               required
             />
             <div className="password-input-container">
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (isRegister && e.target.value.length > 0) {
+                      setShowPasswordSuggestor(true);
+                    } else {
+                      setShowPasswordSuggestor(false);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (isRegister && password.length === 0) {
+                      setShowPasswordSuggestor(true);
+                    }
+                  }}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
+              </div>
               {isRegister && password && (
                 <div className={`password-strength ${strengthLevel}`}>
                   <div className="strength-bar">
                     <div 
                       className="strength-fill" 
-                      style={{width: `${(passwordStrength.score / 6) * 100}%`}}
+                      style={{width: `${Math.max(0, Math.min(100, (passwordStrength.score / 8) * 100))}%`}}
                     ></div>
                   </div>
                   <span className="strength-text">
                     {strengthLevel === 'strong' ? 'Strong' : 
-                     strengthLevel === 'medium' ? 'Medium' : 'Weak'}
+                     strengthLevel === 'medium' ? 'Moderate' : 'Weak'}
                   </span>
                 </div>
               )}
@@ -237,16 +326,81 @@ function Login({ onLogin }) {
         </div>
       </div>
 
+      {/* Show Tips Button - Appears when sidebar is hidden */}
+      {isRegister && !showPasswordTips && (
+        <div className="show-tips-button">
+          <button 
+            className="show-tips-btn"
+            onClick={() => {
+              initializeDynamicPasswords();
+              setShowPasswordTips(true);
+            }}
+          >
+            <i className="fas fa-shield-alt"></i> Show Password Security Tips
+          </button>
+        </div>
+      )}
+
+      {/* Password Suggestor - Shows when user starts typing in register mode */}
+      {isRegister && showPasswordSuggestor && (
+        <div className="password-suggestor">
+          <div className="suggestor-header">
+            <h4><i className="fas fa-lightbulb"></i> Need a Strong Password?</h4>
+            <button 
+              className="close-suggestor"
+              onClick={() => setShowPasswordSuggestor(false)}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+          <div className="suggestor-content">
+            <p>Here are some strong password suggestions:</p>
+            <div className="suggestor-passwords">
+              {generatePasswordSuggestions().map((suggestion, index) => (
+                <div key={index} className="suggestor-password">
+                  <div className="suggestion-display">
+                    <code>{suggestion.password}</code>
+                    <button 
+                      className="use-password-btn"
+                      onClick={() => {
+                        setPassword(suggestion.password);
+                        setShowPasswordSuggestor(false);
+                      }}
+                      title="Use this password"
+                    >
+                      <i className="fas fa-check"></i>
+                    </button>
+                    <button 
+                      className="copy-password-btn"
+                      onClick={() => navigator.clipboard.writeText(suggestion.password)}
+                      title="Copy to clipboard"
+                    >
+                      <i className="fas fa-copy"></i>
+                    </button>
+                  </div>
+                  <p className="suggestion-desc">{suggestion.explanation}</p>
+                </div>
+              ))}
+            </div>
+            <div className="suggestor-tip">
+              <p><i className="fas fa-info-circle"></i> <strong>Tip:</strong> Choose a password that's memorable to you but hard for others to guess!</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Password Strength Sidebar - Only show when registering */}
-      {isRegister && (
+      {isRegister && showPasswordTips && (
         <div className="password-sidebar">
           <div className="sidebar-header">
             <h3><i className="fas fa-shield-alt"></i> Password Security</h3>
             <button 
               className="toggle-btn"
-              onClick={() => setShowPasswordTips(!showPasswordTips)}
+              onClick={() => {
+                setShowPasswordTips(false);
+              }}
             >
-              {showPasswordTips ? 'Hide' : 'Show'} Tips
+              Hide Tips
             </button>
           </div>
 
@@ -301,6 +455,31 @@ function Login({ onLogin }) {
             </div>
           )}
 
+          {/* Quick Password Suggestion */}
+          <div className="quick-suggestion">
+            <h4><i className="fas fa-lightbulb"></i> Need a Strong Password?</h4>
+            <div className="quick-suggestion-content">
+              <div className="suggestion-display">
+                <code>{generatePasswordSuggestions()[0]?.password || 'Mountain@2024!secure'}</code>
+                <button 
+                  className="use-btn"
+                  onClick={() => setPassword(generatePasswordSuggestions()[0]?.password || 'Mountain@2024!secure')}
+                  title="Use this password"
+                >
+                  <i className="fas fa-check"></i>
+                </button>
+                <button 
+                  className="copy-btn"
+                  onClick={() => navigator.clipboard.writeText(generatePasswordSuggestions()[0]?.password || 'Mountain@2024!secure')}
+                  title="Copy to clipboard"
+                >
+                  <i className="fas fa-copy"></i>
+                </button>
+              </div>
+              <p className="suggestion-explanation">Strong password with mixed case, numbers, and symbols</p>
+            </div>
+          </div>
+
           {showPasswordTips && (
             <div className="password-tips">
               <h4><i className="fas fa-lightbulb"></i> Strong Password Examples</h4>
@@ -320,6 +499,48 @@ function Login({ onLogin }) {
                     <p className="suggestion-explanation">{suggestion.explanation}</p>
                   </div>
                 ))}
+              </div>
+
+              <h4>
+                <i className="fas fa-magic"></i> Dynamic Password Generator
+                <button 
+                  className="refresh-btn"
+                  onClick={refreshDynamicPasswords}
+                  title="Generate new passwords"
+                >
+                  <i className="fas fa-sync-alt"></i>
+                </button>
+              </h4>
+              <div className="password-suggestions">
+                {dynamicPasswords.map((suggestion, index) => {
+                  const strength = checkPasswordStrength(suggestion.password);
+                  const isStrong = strength.score >= 6;
+                  return (
+                    <div key={index} className={`password-suggestion ${isStrong ? 'strong-password' : 'weak-password'}`}>
+                      <div className="suggestion-password">
+                        <code>{suggestion.password}</code>
+                        <span className={`strength-badge ${isStrong ? 'strong' : 'weak'}`}>
+                          {isStrong ? 'Strong' : 'Weak'} ({strength.score}/8)
+                        </span>
+                        <button 
+                          className="use-btn"
+                          onClick={() => setPassword(suggestion.password)}
+                          title="Use this password"
+                        >
+                          <i className="fas fa-check"></i>
+                        </button>
+                        <button 
+                          className="copy-btn"
+                          onClick={() => navigator.clipboard.writeText(suggestion.password)}
+                          title="Copy to clipboard"
+                        >
+                          <i className="fas fa-copy"></i>
+                        </button>
+                      </div>
+                      <p className="suggestion-explanation">{suggestion.explanation}</p>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="security-tips">
