@@ -449,10 +449,101 @@ textarea:focus {
   max-width: 400px;
 }
 
-.login-card h2 {
+.login-header {
   text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.app-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-layout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 280px;
+  height: 100px;
+}
+
+.app-title i {
+  font-size: 4rem;
+  color: #28a745;
+  text-shadow: 2px 2px 4px rgba(40, 167, 69, 0.3);
+  animation: shield-pulse 2s ease-in-out infinite;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin-left: -2rem;
+}
+
+.title-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin-left: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.scam-text {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #667eea;
+  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.sense-text {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #667eea;
+  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+@keyframes shield-pulse {
+  0%, 100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.app-subtitle {
+  font-size: 1rem;
+  color: #666;
   margin-bottom: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.form-title {
+  font-size: 1.5rem;
   color: #333;
+  margin: 0;
+  font-weight: 600;
 }
 
 .login-card input {
@@ -549,6 +640,53 @@ textarea:focus {
 .password-input-container {
   position: relative;
   margin-bottom: 1rem;
+  z-index: 1001;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding: 1rem;
+  padding-right: 3rem;
+  margin-bottom: 0;
+  border: 2px solid #e1e5e9;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.password-input-wrapper input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: color 0.3s, background-color 0.3s;
+  font-size: 1rem;
+}
+
+.password-toggle-btn:hover {
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+.password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
 .password-strength {
@@ -597,6 +735,29 @@ textarea:focus {
   border-radius: 10px;
 }
 
+.strength-indicator {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: white;
+  border: 2px solid #e9ecef;
+}
+
+.strength-indicator.weak {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.strength-indicator.medium {
+  border-color: #ffc107;
+  background: #fffbf0;
+}
+
+.strength-indicator.strong {
+  border-color: #28a745;
+  background: #f0fff4;
+}
+
 .password-feedback h4 {
   color: #333;
   margin-bottom: 1rem;
@@ -625,6 +786,135 @@ textarea:focus {
   color: #dc3545;
 }
 
+.weakness-explanation {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.weakness-explanation h5 {
+  color: #856404;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weakness-explanation p {
+  color: #856404;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.registration-blocked {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8d7da;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+}
+
+.registration-blocked p {
+  color: #721c24;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registration-warning {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.registration-warning p {
+  color: #856404;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registration-approved {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #d4edda;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.registration-approved p {
+  color: #155724;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Quick Password Suggestion */
+.quick-suggestion {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.quick-suggestion h4 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-suggestion-content {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.quick-suggestion .suggestion-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.quick-suggestion .suggestion-display code {
+  background: #e9ecef;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  flex: 1;
+  border: 2px solid #667eea;
+  font-weight: 600;
+}
+
+.quick-suggestion .suggestion-explanation {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
 .password-tips {
   border-top: 2px solid #f8f9fa;
   padding-top: 1.5rem;
@@ -637,6 +927,7 @@ textarea:focus {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: space-between;
 }
 
 .password-suggestions {
@@ -668,7 +959,7 @@ textarea:focus {
   margin-right: 0.5rem;
 }
 
-.copy-btn {
+.copy-btn, .use-btn {
   background: #667eea;
   color: white;
   border: none;
@@ -677,10 +968,31 @@ textarea:focus {
   cursor: pointer;
   font-size: 0.8rem;
   transition: background-color 0.3s;
+  margin-left: 0.25rem;
 }
 
 .copy-btn:hover {
   background: #5a6fd8;
+}
+
+.use-btn:hover {
+  background: #28a745;
+}
+
+.refresh-btn {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.3s;
+  margin-left: 0.5rem;
+}
+
+.refresh-btn:hover {
+  background: #138496;
 }
 
 .suggestion-explanation {
@@ -724,6 +1036,206 @@ textarea:focus {
   color: #856404;
 }
 
+/* Password Suggestor */
+.password-suggestor {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  z-index: 1000;
+  margin-top: 0.5rem;
+  border: 2px solid #667eea;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.suggestor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 2px solid #f8f9fa;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.suggestor-header h4 {
+  color: #333;
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.close-suggestor {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.3s;
+}
+
+.close-suggestor:hover {
+  color: #dc3545;
+}
+
+.suggestor-content {
+  padding: 1rem;
+}
+
+.suggestor-content > p {
+  color: #666;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.suggestor-passwords {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.suggestor-password {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.suggestion-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.suggestion-display code {
+  background: #e9ecef;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  flex: 1;
+  margin-right: 0.5rem;
+  border: 1px solid #dee2e6;
+}
+
+.strength-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.strength-badge.strong {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.strength-badge.weak {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.password-suggestion.strong-password {
+  border-left-color: #28a745;
+}
+
+.password-suggestion.weak-password {
+  border-left-color: #dc3545;
+}
+
+.use-password-btn, .copy-password-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.3s;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.use-password-btn:hover {
+  background: #28a745;
+}
+
+.copy-password-btn:hover {
+  background: #5a6fd8;
+}
+
+.suggestion-desc {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.suggestor-tip {
+  background: #e7f3ff;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.suggestor-tip p {
+  color: #0056b3;
+  font-size: 0.85rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Show Tips Button */
+.show-tips-button {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.show-tips-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.show-tips-btn:hover {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.show-tips-btn:active {
+  transform: translateY(0);
+}
+
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {
   .login-container {
@@ -739,5 +1251,14 @@ textarea:focus {
   .password-sidebar {
     width: 100%;
     max-width: 400px;
+  }
+
+  .password-suggestor {
+    position: relative;
+    margin-top: 1rem;
+  }
+
+  .show-tips-button {
+    margin-top: 0.5rem;
   }
 }
