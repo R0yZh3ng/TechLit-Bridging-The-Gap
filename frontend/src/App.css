@@ -408,10 +408,101 @@ textarea:focus {
   max-width: 400px;
 }
 
-.login-card h2 {
+.login-header {
   text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.app-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-layout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 280px;
+  height: 100px;
+}
+
+.app-title i {
+  font-size: 4rem;
+  color: #28a745;
+  text-shadow: 2px 2px 4px rgba(40, 167, 69, 0.3);
+  animation: shield-pulse 2s ease-in-out infinite;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin-left: -2rem;
+}
+
+.title-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin-left: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.scam-text {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #667eea;
+  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.sense-text {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #667eea;
+  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+@keyframes shield-pulse {
+  0%, 100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.app-subtitle {
+  font-size: 1rem;
+  color: #666;
   margin-bottom: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.form-title {
+  font-size: 1.5rem;
   color: #333;
+  margin: 0;
+  font-weight: 600;
 }
 
 .login-card input {
