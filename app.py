@@ -126,6 +126,9 @@ from datetime import datetime
 import base64
 from PIL import Image
 import io
+import random
+from pydub import AudioSegment
+from pydub.generators import Sine
 
 class ScamAnalyzer:
     def __init__(self):
@@ -252,8 +255,6 @@ class ScamAnalyzer:
         risk_score = 0
         warnings = []
         
-        
-        ##
         # Rule-based image analysis
         if self._has_suspicious_image_patterns(image_data):
             risk_score += 40
@@ -267,6 +268,74 @@ class ScamAnalyzer:
             'warnings': warnings,
             'recommendations': self._get_image_recommendations(risk_level),
             'timestamp': datetime.now().isoformat()
+        }
+    
+    def generate_fake_call_scenario(self, difficulty='medium'):
+        """Generate AI-powered fake call scenario for testing"""
+        if bedrock_available and llm:
+            try:
+                prompt = f"""Generate a realistic {difficulty} difficulty scam call scenario. Return ONLY a JSON object with this exact format:
+{{
+    "caller_name": "caller identity (e.g., Bank Security, IRS Agent)",
+    "script": "what the scammer says (1-2 sentences)",
+    "red_flags": ["list", "of", "fraud", "indicators"]
+}}
+
+Make it {difficulty} to detect. Use common scam tactics like urgency, threats, requests for personal info, or too-good-to-be-true offers."""
+                
+                response = llm.invoke(prompt)
+                if hasattr(response, 'content'):
+                    response_text = response.content
+                elif isinstance(response, dict) and 'content' in response:
+                    response_text = response['content']
+                else:
+                    response_text = str(response)
+                
+                # Extract JSON from response
+                import json
+                json_start = response_text.find('{')
+                json_end = response_text.rfind('}') + 1
+                if json_start != -1 and json_end != -1:
+                    json_str = response_text[json_start:json_end]
+                    scenario_data = json.loads(json_str)
+                    
+                    return {
+                        'caller_id': f"+1-{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(1000,9999)}",
+                        'caller_name': scenario_data.get('caller_name', 'Unknown Caller'),
+                        'script': scenario_data.get('script', 'This is a test call.'),
+                        'red_flags': scenario_data.get('red_flags', ['suspicious call']),
+                        'difficulty': difficulty,
+                        'timestamp': datetime.now().isoformat(),
+                        'generated_by': 'AI'
+                    }
+            except Exception as e:
+                print(f"AI scenario generation failed: {e}")
+        
+        # Fallback to static scenarios
+        scenarios = {
+            'easy': [
+                {'caller': 'Bank Security', 'script': 'This is urgent! Your account has been compromised. Please verify your PIN immediately.', 'red_flags': ['urgency', 'PIN request']},
+                {'caller': 'IRS Agent', 'script': 'You owe back taxes. Pay now or face arrest. Give me your credit card number.', 'red_flags': ['threat', 'payment demand']}
+            ],
+            'medium': [
+                {'caller': 'Tech Support', 'script': 'We detected suspicious activity on your computer. Let me help you fix it remotely.', 'red_flags': ['unsolicited help', 'remote access']},
+                {'caller': 'Prize Winner', 'script': 'Congratulations! You won $10,000. Just pay the processing fee to claim your prize.', 'red_flags': ['upfront fee', 'too good to be true']}
+            ],
+            'hard': [
+                {'caller': 'Family Emergency', 'script': 'Hi grandma, I\'m in trouble and need money for bail. Please don\'t tell mom.', 'red_flags': ['emotional manipulation', 'secrecy request']},
+                {'caller': 'Investment Advisor', 'script': 'I have insider information on a stock that will triple your money this week.', 'red_flags': ['insider trading', 'guaranteed returns']}
+            ]
+        }
+        
+        scenario = random.choice(scenarios.get(difficulty, scenarios['medium']))
+        return {
+            'caller_id': f"+1-{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(1000,9999)}",
+            'caller_name': scenario['caller'],
+            'script': scenario['script'],
+            'red_flags': scenario['red_flags'],
+            'difficulty': difficulty,
+            'timestamp': datetime.now().isoformat(),
+            'generated_by': 'Static'
         }
     
     def _is_suspicious_sender(self, sender):
@@ -390,10 +459,79 @@ class ScamAnalyzer:
     def _is_legitimate_source(self, source):
         legitimate_indicators = ['gov', 'edu', 'bank', 'official']
         return any(indicator in str(source).lower() for indicator in legitimate_indicators)
+    
+    def generate_fake_call_audio(self, script, voice_type='scammer'):
+        """Generate fake call audio using AWS Polly"""
+        try:
+            polly = session.client('polly', region_name=REGION)
+            
+            voice_settings = {
+                'scammer': {'VoiceId': 'Matthew', 'Engine': 'standard'},
+                'elderly': {'VoiceId': 'Joanna', 'Engine': 'standard'},
+                'authority': {'VoiceId': 'Brian', 'Engine': 'standard'}
+            }
+            
+            voice = voice_settings.get(voice_type, voice_settings['scammer'])
+            
+            response = polly.synthesize_speech(
+                Text=script,
+                OutputFormat='mp3',
+                VoiceId=voice['VoiceId'],
+                Engine=voice['Engine']
+            )
+            
+            audio_data = response['AudioStream'].read()
+            audio_b64 = base64.b64encode(audio_data).decode('utf-8')
+            
+            return {
+                'audio_data': audio_b64,
+                'format': 'mp3',
+                'voice_type': voice_type,
+                'duration_estimate': len(script) * 0.1  # Rough estimate
+            }
+            
+        except Exception as e:
+            print(f"Polly audio generation failed: {e}")
+            # Fallback to simple tone generation
+            return self._generate_simple_audio_placeholder()
+    
+    def _generate_simple_audio_placeholder(self):
+        """Generate simple audio placeholder when Polly fails"""
+        try:
+            # Generate a simple tone as placeholder
+            tone = Sine(440).to_audio_segment(duration=3000)  # 3 second tone
+            audio_data = tone.export(format="mp3").read()
+            audio_b64 = base64.b64encode(audio_data).decode('utf-8')
+            
+            return {
+                'audio_data': audio_b64,
+                'format': 'mp3',
+                'voice_type': 'placeholder',
+                'duration_estimate': 3.0,
+                'note': 'Audio placeholder - AWS Polly unavailable'
+            }
+        except:
+            return {
+                'audio_data': '',
+                'format': 'mp3',
+                'voice_type': 'none',
+                'duration_estimate': 0,
+                'error': 'Audio generation failed'
+            }
 
 
 # Initialize analyzer
 analyzer = ScamAnalyzer()
+
+# Initialize Polly client for audio generation
+try:
+    polly_client = session.client('polly', region_name=REGION)
+    polly_available = True
+    print("✅ AWS Polly initialized for audio generation")
+except Exception as e:
+    print(f"⚠️ AWS Polly initialization failed: {e}")
+    polly_client = None
+    polly_available = False
 
 @app.route('/')
 def home():
@@ -595,6 +733,124 @@ def analyze_image():
     except Exception as e:
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
+@app.route('/api/generate/call-scenario', methods=['POST'])
+def generate_call_scenario():
+    try:
+        data = request.json or {}
+        difficulty = data.get('difficulty', 'medium')
+        
+        if difficulty not in ['easy', 'medium', 'hard']:
+            return jsonify({'error': 'Invalid difficulty. Use: easy, medium, hard'}), 400
+        
+        scenario = analyzer.generate_fake_call_scenario(difficulty)
+        return jsonify(scenario)
+    
+    except Exception as e:
+        return jsonify({'error': f'Scenario generation failed: {str(e)}'}), 500
+
+@app.route('/api/generate/call-audio', methods=['POST'])
+def generate_call_audio():
+    try:
+        data = request.json
+        script = data.get('script', '')
+        voice_type = data.get('voice_type', 'scammer')
+        
+        if not script:
+            return jsonify({'error': 'Missing required field: script'}), 400
+        
+        if voice_type not in ['scammer', 'elderly', 'authority']:
+            return jsonify({'error': 'Invalid voice_type. Use: scammer, elderly, authority'}), 400
+        
+        audio_result = analyzer.generate_fake_call_audio(script, voice_type)
+        return jsonify(audio_result)
+    
+    except Exception as e:
+        return jsonify({'error': f'Audio generation failed: {str(e)}'}), 500
+
+@app.route('/api/practice/call-test', methods=['POST'])
+def call_test_practice():
+    try:
+        data = request.json or {}
+        difficulty = data.get('difficulty', 'medium')
+        include_audio = data.get('include_audio', False)
+        
+        # Generate scenario
+        scenario = analyzer.generate_fake_call_scenario(difficulty)
+        
+        # Generate audio if requested
+        if include_audio and polly_available:
+            audio_result = analyzer.generate_fake_call_audio(scenario['script'], 'scammer')
+            scenario['audio'] = audio_result
+        
+        return jsonify({
+            'test_id': f"test_{random.randint(1000, 9999)}",
+            'scenario': scenario,
+            'instructions': 'Listen to or read the call scenario. Identify red flags and determine if this is a scam.',
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    except Exception as e:
+        return jsonify({'error': f'Test generation failed: {str(e)}'}), 500
+
+
+@app.route('/api/practice/call-test/<test_id>/submit', methods=['POST'])
+def submit_call_test(test_id):
+    try:
+        data = request.json
+        user_answer = data.get('is_scam', None)
+        identified_flags = data.get('identified_flags', [])
+        
+        if user_answer is None:
+            return jsonify({'error': 'Missing required field: is_scam'}), 400
+        
+        # For this demo, assume all generated scenarios are scams
+        correct_answer = True
+        is_correct = user_answer == correct_answer
+        
+        score = 0
+        if is_correct:
+            score += 50
+        
+        # Bonus points for identifying red flags
+        score += min(len(identified_flags) * 10, 50)
+        
+        return jsonify({
+            'test_id': test_id,
+            'correct': is_correct,
+            'score': score,
+            'feedback': 'Correct! This was indeed a scam call.' if is_correct else 'Incorrect. This was a scam call with several red flags.',
+            'learning_points': [
+                'Scammers often create urgency to prevent you from thinking clearly',
+                'Legitimate organizations rarely ask for sensitive information over the phone',
+                'Always verify caller identity through official channels'
+            ],
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    except Exception as e:
+        return jsonify({'error': f'Test submission failed: {str(e)}'}), 500
+
+@app.route('/api/generate/examples', methods=['POST'])
+def generate_practice_examples():
+    try:
+        data = request.json or {}
+        example_type = data.get('type', 'mixed')
+        count = min(int(data.get('count', 5)), 10)  # Max 10 examples
+        
+        examples = generate_ai_examples(example_type, count)
+        
+        if not examples:
+            # Fallback to static examples
+            static_examples = [
+                {'type': 'phishing_email', 'text': 'Your PayPal account has been limited. Click to restore access.', 'is_fraud': True, 'explanation': 'Phishing attempt using urgency and fake links'},
+                {'type': 'legitimate', 'text': 'Your order #12345 has shipped. Track at our website.', 'is_fraud': False, 'explanation': 'Normal business communication with order details'}
+            ]
+            return jsonify(static_examples[:count])
+        
+        return jsonify(examples)
+    
+    except Exception as e:
+        return jsonify({'error': f'Example generation failed: {str(e)}'}), 500
 
 @app.route('/history', methods=['GET'])
 @jwt_required()
@@ -757,6 +1013,43 @@ def analyze_image_with_bedrock(image_data):
             'error_details': str(e)
         }
 
+def generate_ai_examples(example_type='mixed', count=5):
+    """Generate AI-powered examples for practice"""
+    if not bedrock_available or not llm:
+        return []
+    
+    try:
+        prompt = f"""Generate {count} realistic {example_type} examples for fraud detection training. Return ONLY a JSON array:
+[
+    {{
+        "type": "category",
+        "text": "example content",
+        "is_fraud": true/false,
+        "explanation": "why this is/isn't fraud"
+    }}
+]
+
+Types: phishing_email, scam_text, fake_news, investment_scam, tech_support_scam, legitimate_message
+Make them realistic and educational."""
+        
+        response = llm.invoke(prompt)
+        if hasattr(response, 'content'):
+            response_text = response.content
+        elif isinstance(response, dict) and 'content' in response:
+            response_text = response['content']
+        else:
+            response_text = str(response)
+        
+        json_start = response_text.find('[')
+        json_end = response_text.rfind(']') + 1
+        if json_start != -1 and json_end != -1:
+            json_str = response_text[json_start:json_end]
+            return json.loads(json_str)
+    except Exception as e:
+        print(f"AI example generation failed: {e}")
+    
+    return []
+
 def rule_based_analysis(text: str) -> str:
     text_lower = text.lower()
 
@@ -787,38 +1080,74 @@ def rule_based_analysis(text: str) -> str:
 
 @app.route('/api/examples')
 def get_examples():
-    # Get language preference from query parameter
     lang = request.args.get('lang', 'en')
+    count = int(request.args.get('count', 4))
     
+    if bedrock_available and llm:
+        try:
+            prompt = f"""Generate {count} diverse fraud detection examples. Return ONLY a JSON array with this exact format:
+[
+    {{
+        "type": "example_type",
+        "text": "example text content",
+        "is_fraud": true/false
+    }}
+]
+
+Include mix of: phishing_email, fake_news, scam_text, legitimate_message. Make examples realistic and varied."""
+            
+            response = llm.invoke(prompt)
+            if hasattr(response, 'content'):
+                response_text = response.content
+            elif isinstance(response, dict) and 'content' in response:
+                response_text = response['content']
+            else:
+                response_text = str(response)
+            
+            # Extract JSON array
+            json_start = response_text.find('[')
+            json_end = response_text.rfind(']') + 1
+            if json_start != -1 and json_end != -1:
+                json_str = response_text[json_start:json_end]
+                examples = json.loads(json_str)
+                
+                # Add generated flag
+                for example in examples:
+                    example['generated_by'] = 'AI'
+                
+                return jsonify(examples)
+        except Exception as e:
+            print(f"AI example generation failed: {e}")
+    
+    # Fallback static examples
     examples = [
         {
             'type': 'phishing_email',
             'text': 'URGENT: Your account will be suspended! Click here immediately to verify your information.',
-            'is_fraud': True
+            'is_fraud': True,
+            'generated_by': 'Static'
         },
         {
             'type': 'fake_news',
             'text': "Scientists discover miracle cure that doctors don't want you to know about!",
-            'is_fraud': True
+            'is_fraud': True,
+            'generated_by': 'Static'
         },
         {
             'type': 'legitimate',
             'text': 'Your monthly statement is now available. Log in to your account to view it.',
-            'is_fraud': False
+            'is_fraud': False,
+            'generated_by': 'Static'
+        },
+        {
+            'type': 'scam_call',
+            'text': 'This is the IRS. You owe back taxes and will be arrested unless you pay immediately.',
+            'is_fraud': True,
+            'generated_by': 'Static'
         }
     ]
     
-    # Translate examples if requested language is not English
-    if lang != 'en':
-        for example in examples:
-            try:
-                translated = translator.translate(example['text'], src='en', dest=lang)
-                example['text'] = translated.text
-                example['original_text'] = example['text']
-            except:
-                pass  # Keep original if translation fails
-    
-    return jsonify(examples)
+    return jsonify(examples[:count])
 
 @app.route('/api/stats')
 def get_stats():
@@ -830,6 +1159,11 @@ def get_stats():
             'low': 0
         },
         'api_status': 'operational',
+        'services': {
+            'bedrock': bedrock_available,
+            'polly': polly_available,
+            'rekognition': bedrock_available  # Same session
+        },
         'last_updated': datetime.now().isoformat()
     })
 
@@ -867,5 +1201,6 @@ def get_translations(lang):
 
 if __name__ == '__main__':
     print("Starting Flask server...")
+    print(f"Services available: Bedrock={bedrock_available}, Polly={polly_available}")
     app.run(debug=True, port=8000, host='0.0.0.0')
 

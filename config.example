@@ -2,12 +2,12 @@
 # Copy this file to .env and fill in your AWS credentials
 
 # AWS Credentials (REQUIRED)
-# Need access to Bedrock and Rekognition services
+# Need access to Bedrock, Rekognition, and Polly services
 AWS_ACCESS_KEY_ID=your_access_key_here
 AWS_SECRET_ACCESS_KEY=your_secret_key_here
 
 # AWS Region (OPTIONAL - defaults to us-west-2)
-# Ensure Bedrock and Rekognition are available in your region
+# Ensure Bedrock, Rekognition, and Polly are available in your region
 AWS_REGION=us-west-2
 
 # Bedrock Model ID for text analysis (OPTIONAL - defaults to meta.llama3-8b-instruct-v1:0)

@@ -47,61 +47,94 @@ function Home() {
   return (
     <>
       <div className="hero">
-        <h1><i className="fas fa-search"></i> {t('fraud_detection_trainer')}</h1>
-        <p>{t('learn_to_identify')}</p>
+        <div className="hero-content">
+          <h1 className="fade-in">
+            <i className="fas fa-shield-alt"></i> {t('fraud_detection_trainer')}
+          </h1>
+          <p className="slide-up">{t('learn_to_identify')}</p>
+        </div>
       </div>
 
       <div className="container">
-        <div className="analyzer-card">
-          <h2><i className="fas fa-microscope"></i> {t('text_analyzer')}</h2>
-          <p>{t('paste_suspicious')}</p>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={t('placeholder')}
-          />
-          <br /><br />
-          <button className="btn" onClick={analyzeText}>
-            <i className="fas fa-search"></i> {t('analyze_button')}
-          </button>
+        <div className="analyzer-card slide-up">
+          <div className="component-header">
+            <h2>
+              <i className="fas fa-microscope"></i> {t('text_analyzer')}
+            </h2>
+            <p>{t('paste_suspicious')}</p>
+          </div>
+          
+          <div className="form-group">
+            <textarea
+              className="form-control"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={t('placeholder')}
+              rows="6"
+            />
+          </div>
+          
+          <div className="text-center">
+            <button className="btn primary-btn" onClick={analyzeText} disabled={!text || loading}>
+              <i className="fas fa-search"></i> {t('analyze_button')}
+            </button>
+          </div>
           
           {loading && (
-            <div className="loading">
-              <i className="fas fa-spinner fa-spin"></i> {t('analyzing')}
+            <div className="loading fade-in">
+              {t('analyzing')}
             </div>
           )}
           
           {result && (
-            <div className="result">
-              <pre>{result}</pre>
+            <div className="result bounce-in">
+              <div className="result-header">
+                <h3><i className="fas fa-chart-line"></i> Analysis Result</h3>
+              </div>
+              <div className="result-content">
+                <pre style={{whiteSpace: 'pre-wrap', fontFamily: 'inherit'}}>{result}</pre>
+              </div>
             </div>
           )}
         </div>
 
-        <ImageAnalyzer />
+        <div className="fade-in">
+          <ImageAnalyzer />
+        </div>
 
-        <h2 className="section-title">
-          <i className="fas fa-lightbulb"></i> {t('practice_examples')}
-        </h2>
+        <div className="text-center mb-5">
+          <h2 className="section-title">
+            <i className="fas fa-lightbulb"></i> {t('practice_examples')}
+          </h2>
+        </div>
         
         <div className="examples-grid">
           {examples.map((example, index) => (
             <div
               key={index}
-              className={`example ${example.is_fraud ? 'fraud' : 'safe'}`}
+              className={`example ${example.is_fraud ? 'fraud' : 'safe'} slide-up`}
               onClick={() => handleExampleClick(example.text)}
+              style={{animationDelay: `${index * 0.1}s`}}
             >
-              <h3>
-                <i className={`fas ${example.is_fraud ? 'fa-exclamation-triangle' : 'fa-check-circle'}`}></i>{' '}
-                {example.type.replace('_', ' ').toUpperCase()}
-              </h3>
-              <p>{example.text}</p>
-              <small>
-                {example.is_fraud 
-                  ? t('click_to_analyze_fraud')
-                  : t('click_to_analyze_safe')
-                }
-              </small>
+              <div className="flex justify-between items-start mb-3">
+                <div className="status-indicator" style={{background: '#e2e8f0', color: '#4a5568'}}>
+                  {example.type.replace('_', ' ').toUpperCase()}
+                </div>
+                <div className={`status-indicator ${example.is_fraud ? 'status-fraud' : 'status-safe'}`}>
+                  <i className={`fas ${example.is_fraud ? 'fa-exclamation-triangle' : 'fa-check-circle'}`}></i>
+                  {example.is_fraud ? 'FRAUD' : 'SAFE'}
+                </div>
+              </div>
+              
+              <div className="detailed-analysis mb-4">
+                <p>{example.text}</p>
+              </div>
+              
+              <div className="text-center">
+                <small style={{color: '#718096', fontWeight: '500'}}>
+                  <i className="fas fa-mouse-pointer"></i> Click to analyze this example
+                </small>
+              </div>
             </div>
           ))}
         </div>

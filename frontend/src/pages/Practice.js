@@ -77,80 +77,127 @@ function Practice() {
 
   if (quizComplete) {
     return (
-      <div className="container">
-        <h1 className="page-title"><i className="fas fa-dumbbell"></i> Practice Fraud Detection</h1>
-        <div className="score">
-          <h2>Quiz Complete!</h2>
-          <div className="score-number">{score}/{answered}</div>
-          <p>Great job practicing fraud detection. Review the questions to reinforce your learning.</p>
+      <>
+        <div className="hero">
+          <div className="hero-content">
+            <h1 className="fade-in">
+              <i className="fas fa-trophy"></i> Quiz Complete!
+            </h1>
+            <p className="slide-up">Congratulations on completing the fraud detection practice</p>
+          </div>
         </div>
-        <div style={{textAlign: 'center', marginTop: '2rem'}}>
-          <button className="btn" onClick={resetQuiz}>
-            <i className="fas fa-redo"></i> Reset Quiz
-          </button>
+        
+        <div className="container">
+          <div className="score bounce-in">
+            <h2><i className="fas fa-medal"></i> Final Results</h2>
+            <div className="score-number">{score}/{answered}</div>
+            <div className={`status-indicator ${score/answered >= 0.8 ? 'status-safe' : score/answered >= 0.6 ? 'status-medium' : 'status-high'}`}>
+              {score/answered >= 0.8 ? '🌟 Excellent!' : score/answered >= 0.6 ? '👍 Good Job!' : '📚 Keep Learning!'}
+            </div>
+            <p>Great job practicing fraud detection. Review the questions to reinforce your learning.</p>
+          </div>
+          
+          <div className="text-center mt-5">
+            <button className="btn primary-btn" onClick={resetQuiz}>
+              <i className="fas fa-redo"></i> Try Again
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   const question = quizData[currentQuestion];
 
   return (
-    <div className="container">
-      <h1 className="page-title"><i className="fas fa-dumbbell"></i> Practice Fraud Detection</h1>
-
-      <div className="score">
-        <h2>Your Score</h2>
-        <div className="score-number">{score}/{answered}</div>
-        <p>Keep practicing to improve your fraud detection skills!</p>
-      </div>
-
-      <div className="quiz-card">
-        <div className="question">
-          <strong>Question {currentQuestion + 1}:</strong> {question.question}
+    <>
+      <div className="hero">
+        <div className="hero-content">
+          <h1 className="fade-in">
+            <i className="fas fa-dumbbell"></i> Practice Fraud Detection
+          </h1>
+          <p className="slide-up">Test your skills with interactive fraud detection scenarios</p>
         </div>
-        <div className="text-sample">{question.text}</div>
-        <div className="options">
-          {question.options.map((option, index) => (
-            <div
-              key={index}
-              className={`option ${
-                selectedAnswer === index ? 'selected' : ''
-              } ${
-                showResult && index === question.correct ? 'correct' : ''
-              } ${
-                showResult && selectedAnswer === index && index !== question.correct ? 'incorrect' : ''
-              }`}
-              onClick={() => selectOption(index)}
-            >
-              {option}
+      </div>
+      
+      <div className="container">
+        <div className="score slide-up">
+          <h2><i className="fas fa-trophy"></i> Your Progress</h2>
+          <div className="score-number">{score}/{answered}</div>
+          <p>Keep practicing to master fraud detection skills!</p>
+        </div>
+
+        <div className="quiz-card fade-in">
+          <div className="question">
+            <div className="flex justify-between items-center mb-4">
+              <span className="status-indicator" style={{background: '#e2e8f0', color: '#4a5568'}}>
+                Question {currentQuestion + 1} of {quizData.length}
+              </span>
+              <div className="status-indicator status-info">
+                <i className="fas fa-clock"></i> Practice Mode
+              </div>
             </div>
-          ))}
-        </div>
-        {!showResult && (
-          <button 
-            className="btn" 
-            onClick={submitAnswer} 
-            disabled={selectedAnswer === null}
-          >
-            Submit Answer
-          </button>
-        )}
-        {showResult && (
-          <div className={`result ${selectedAnswer === question.correct ? 'correct' : 'incorrect'}`}>
-            <i className={`fas ${selectedAnswer === question.correct ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
-            {selectedAnswer === question.correct ? ' Correct! ' : ' Incorrect. '}
-            {question.explanation}
+            <h3>{question.question}</h3>
           </div>
-        )}
-      </div>
+          
+          <div className="text-sample">
+            <i className="fas fa-quote-left"></i>
+            {question.text}
+          </div>
+          
+          <div className="options">
+            {question.options.map((option, index) => (
+              <div
+                key={index}
+                className={`option ${
+                  selectedAnswer === index ? 'selected' : ''
+                } ${
+                  showResult && index === question.correct ? 'correct' : ''
+                } ${
+                  showResult && selectedAnswer === index && index !== question.correct ? 'incorrect' : ''
+                }`}
+                onClick={() => selectOption(index)}
+              >
+                <i className={`fas ${
+                  showResult && index === question.correct ? 'fa-check-circle' :
+                  showResult && selectedAnswer === index && index !== question.correct ? 'fa-times-circle' :
+                  selectedAnswer === index ? 'fa-dot-circle' : 'fa-circle'
+                }`}></i>
+                {option}
+              </div>
+            ))}
+          </div>
+          
+          {!showResult && (
+            <div className="text-center mt-4">
+              <button 
+                className="btn primary-btn" 
+                onClick={submitAnswer} 
+                disabled={selectedAnswer === null}
+              >
+                <i className="fas fa-paper-plane"></i> Submit Answer
+              </button>
+            </div>
+          )}
+          
+          {showResult && (
+            <div className={`result ${selectedAnswer === question.correct ? 'correct' : 'incorrect'} bounce-in`}>
+              <div className="flex items-center gap-3 mb-3">
+                <i className={`fas ${selectedAnswer === question.correct ? 'fa-check-circle' : 'fa-times-circle'}`} style={{fontSize: '1.5rem'}}></i>
+                <strong>{selectedAnswer === question.correct ? 'Correct!' : 'Incorrect'}</strong>
+              </div>
+              <p>{question.explanation}</p>
+            </div>
+          )}
+        </div>
 
-      <div style={{textAlign: 'center', marginTop: '2rem'}}>
-        <button className="btn" onClick={resetQuiz}>
-          <i className="fas fa-redo"></i> Reset Quiz
-        </button>
+        <div className="text-center mt-5">
+          <button className="btn btn-secondary" onClick={resetQuiz}>
+            <i className="fas fa-redo"></i> Reset Quiz
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

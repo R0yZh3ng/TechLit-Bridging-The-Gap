@@ -30,6 +30,8 @@ function Navbar({ user }) {
           <li><Link to="/"><i className="fas fa-home"></i> {t('home')}</Link></li>
           <li><Link to="/learn"><i className="fas fa-book"></i> {t('learn')}</Link></li>
           <li><Link to="/practice"><i className="fas fa-dumbbell"></i> {t('practice')}</Link></li>
+          <li><Link to="/call-test"><i className="fas fa-phone"></i> Call Test</Link></li>
+          <li><Link to="/ai-examples"><i className="fas fa-robot"></i> AI Examples</Link></li>
           <li><Link to="/about"><i className="fas fa-info-circle"></i> {t('about')}</Link></li>
           <li className="language-selector" 
               onMouseEnter={() => setShowLanguageDropdown(true)}

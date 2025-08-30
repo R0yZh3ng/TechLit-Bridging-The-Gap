@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import Learn from './pages/Learn';
 import Practice from './pages/Practice';
 import About from './pages/About';
+import CallTester from './components/CallTester';
+import AIExampleGenerator from './components/AIExampleGenerator';
 import { getUser } from './utils/auth';
 import { LanguageProvider } from './contexts/LanguageContext';
 import './utils/auth'; // Initialize axios interceptors
@@ -42,6 +44,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/learn" element={<Learn />} />
             <Route path="/practice" element={<Practice />} />
+            <Route path="/call-test" element={<CallTester />} />
+            <Route path="/ai-examples" element={<AIExampleGenerator />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </div>
