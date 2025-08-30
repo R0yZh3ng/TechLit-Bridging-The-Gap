@@ -14,3 +14,6 @@ BEDROCK_MODEL_ID=meta.llama3-8b-instruct-v1:0
 # Flask Configuration (OPTIONAL)
 FLASK_ENV=development
 FLASK_DEBUG=true
+
+# JWT Configuration (OPTIONAL - defaults to 'your-secret-key-change-this')
+JWT_SECRET_KEY=your-secret-key-change-this
