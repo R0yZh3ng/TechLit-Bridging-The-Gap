@@ -4,5 +4,9 @@ langchain-aws
 boto3
 botocore
 awscli
+libraries
 python-dotenv
 SpeechRecognition
+
+python-dotenv
+main

@@ -1,0 +1,16 @@
+# AWS Configuration Example
+# Copy this file to .env and fill in your AWS credentials
+
+# AWS Credentials (REQUIRED)
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
+
+# AWS Region (OPTIONAL - defaults to us-west-2)
+AWS_REGION=us-west-2
+
+# Bedrock Model ID (OPTIONAL - defaults to meta.llama3-8b-instruct-v1:0)
+BEDROCK_MODEL_ID=meta.llama3-8b-instruct-v1:0
+
+# Flask Configuration (OPTIONAL)
+FLASK_ENV=development
+FLASK_DEBUG=true
