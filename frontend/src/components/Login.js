@@ -252,7 +252,19 @@ function Login({ onLogin }) {
     <div className="login-container">
       <div className="login-main">
         <div className="login-card">
-          <h2>{isRegister ? 'Create Account' : 'Sign In'}</h2>
+          <div className="login-header">
+            <h1 className="app-title">
+              <div className="title-layout">
+                <i className="fas fa-shield-alt"></i>
+                <div className="title-text">
+                  <span className="scam-text">Scam</span>
+                  <span className="sense-text">Sense</span>
+                </div>
+              </div>
+            </h1>
+            <p className="app-subtitle">Fraud Detection Education Platform</p>
+            <h2 className="form-title">{isRegister ? 'Create Account' : 'Sign In'}</h2>
+          </div>
           <form onSubmit={handleSubmit}>
             <input
               type="email"
