@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 db = SQLAlchemy()
 
@@ -10,6 +10,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.LargeBinary)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    current_streak = db.Column(db.Integer, default=0)
+    last_challenge_date = db.Column(db.Date)
     
     def set_password(self, password):
         salt = os.urandom(32)
@@ -28,7 +30,9 @@ class User(db.Model):
         return {
             'id': self.id,
             'email': self.email,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat(),
+            'current_streak': self.current_streak,
+            'last_challenge_date': self.last_challenge_date.isoformat() if self.last_challenge_date else None
         }
 
 class AnalysisHistory(db.Model):

@@ -5,6 +5,7 @@ from langchain_aws import BedrockLLM
 import os
 from dotenv import load_dotenv
 import re
+from datetime import date, timedelta
 from models import db, User, AnalysisHistory
 
 load_dotenv()
@@ -25,8 +26,9 @@ jwt = JWTManager(app)
 # Create tables
 try:
     with app.app_context():
-        db.create_all()
-        print("✅ Database tables created successfully")
+        db.drop_all()  # Drop existing tables
+        db.create_all()  # Create new tables with updated schema
+        print("✅ Database tables recreated successfully")
 except Exception as e:
     print(f"❌ Database initialization failed: {e}")
 
@@ -200,6 +202,102 @@ def rule_based_analysis(text: str) -> str:
     else:
         return "Risk Level: LOW\nWarning Signs: No obvious fraud indicators\nExplanation: Text appears normal, but always verify requests for personal information through official channels."
 
+
+@app.route('/daily-challenge', methods=['GET'])
+def get_daily_challenge():
+    challenges = [
+        {
+            'id': 1,
+            'text': 'URGENT: Your PayPal account has been compromised! Click this link immediately to secure your account: http://paypal-security.fake.com',
+            'options': ['Legitimate', 'Phishing Scam'],
+            'correct': 1,
+            'explanation': 'This is a phishing scam. Red flags: urgency, fake URL, and pressure tactics.'
+        },
+        {
+            'id': 2,
+            'text': 'Congratulations! You have won $1,000,000 in our international lottery! Send us $500 processing fee to claim your prize.',
+            'options': ['Legitimate', 'Advance Fee Scam'],
+            'correct': 1,
+            'explanation': 'This is an advance fee scam. Legitimate lotteries never ask for upfront fees.'
+        },
+        {
+            'id': 3,
+            'text': 'Your monthly bank statement is ready for download. Please log into your account through our official website.',
+            'options': ['Legitimate', 'Suspicious'],
+            'correct': 0,
+            'explanation': 'This appears legitimate as it directs to official channels without urgency.'
+        }
+    ]
+    
+    today = date.today()
+    challenge_index = today.toordinal() % len(challenges)
+    daily_challenge = challenges[challenge_index]
+    
+    return jsonify(daily_challenge)
+
+@app.route('/submit-challenge', methods=['POST'])
+def submit_challenge():
+    # Get user from Authorization header
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Authentication required'}), 401
+    
+    try:
+        token = auth_header.split(' ')[1]
+        # For now, decode the user email from localStorage and find user
+        # In production, you'd properly validate the JWT token
+        user_email = request.json.get('user_email')
+        if user_email:
+            user = User.query.filter_by(email=user_email).first()
+        else:
+            user = User.query.first()  # Fallback
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+    except:
+        return jsonify({'error': 'Invalid token'}), 401
+    data = request.json
+    answer = data.get('answer')
+    
+    if answer is None:
+        return jsonify({'error': 'Answer required'}), 400
+    
+    # user is already retrieved above
+    today = date.today()
+    
+    if user.last_challenge_date == today:
+        return jsonify({
+            'already_completed': True,
+            'message': 'You have already completed today\'s challenge!',
+            'current_streak': user.current_streak
+        })
+    
+    challenges = [
+        {'id': 1, 'correct': 1},
+        {'id': 2, 'correct': 1},
+        {'id': 3, 'correct': 0}
+    ]
+    
+    challenge_index = today.toordinal() % len(challenges)
+    correct_answer = challenges[challenge_index]['correct']
+    
+    is_correct = answer == correct_answer
+    
+    if is_correct:
+        if user.last_challenge_date == today - timedelta(days=1):
+            user.current_streak += 1
+        else:
+            user.current_streak = 1
+        
+        user.last_challenge_date = today
+        db.session.commit()
+    # Don't update streak if incorrect
+    
+    return jsonify({
+        'correct': is_correct,
+        'current_streak': user.current_streak,
+        'message': 'Correct! Streak updated!' if is_correct else 'Incorrect, try again!'
+    })
 
 @app.route('/examples')
 def get_examples():

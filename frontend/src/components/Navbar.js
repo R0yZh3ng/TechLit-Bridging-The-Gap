@@ -9,10 +9,16 @@ function Navbar({ user }) {
         <Link to="/" className="logo">
           <i className="fas fa-shield-alt"></i> ScamSense
         </Link>
+        
+        <div className="navbar-streak">
+          <i className="fas fa-fire"></i>
+          <span>{user?.current_streak || 0}</span>
+        </div>
         <ul className="nav-links">
           <li><Link to="/"><i className="fas fa-home"></i> Home</Link></li>
           <li><Link to="/learn"><i className="fas fa-book"></i> Learn</Link></li>
           <li><Link to="/practice"><i className="fas fa-dumbbell"></i> Practice</Link></li>
+          <li><Link to="/daily-challenge"><i className="fas fa-calendar-day"></i> Daily Challenge</Link></li>
           <li><Link to="/about"><i className="fas fa-info-circle"></i> About</Link></li>
           {user && (
             <li>
