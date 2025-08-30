@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, render_template
 from langchain_aws import BedrockLLM
-import boto3
 import os
 from dotenv import load_dotenv
 import speech_recognition as sr
@@ -10,25 +9,69 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Set AWS profile and initialize Bedrock
-os.environ["AWS_PROFILE"] = "bokchoy"
+# Load config from environment variables
+MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "meta.llama3-8b-instruct-v1:0")
+REGION = os.getenv("AWS_REGION", "us-west-2")
+
+# Initialize Bedrock
+llm = None
+bedrock_available = False
 
 try:
-    llm = BedrockLLM(
-        model_id="amazon.titan-text-express-v1",
-        region_name="us-west-2"
-    )
-    bedrock_available = True
+    # Check if AWS credentials are set in environment
+    if not (os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY')):
+        print("⚠️ AWS credentials not found in environment variables")
+        print("   Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
+    else:
+        # Create boto3 session with explicit environment credentials
+        import boto3
+        session = boto3.Session(
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region_name=REGION
+        )
+        
+        # Initialize Bedrock client
+        bedrock_client = session.client('bedrock-runtime', region_name=REGION)
+        
+        llm = BedrockLLM(
+            model_id=MODEL_ID,
+            region_name=REGION,
+            client=bedrock_client
+        )
+        bedrock_available = True
+        print(f"✅ Bedrock initialized successfully with {MODEL_ID} in {REGION}")
+        print(f"   Using AWS credentials from environment variables")
+        
 except Exception as e:
+libraries
     print(f"Bedrock not available: {e}")
     llm = None
     bedrock_available = False
 
+
+    print(f"❌ Bedrock initialization failed: {e}")
+
+# Route handlers
+main
 @app.route('/')
 def home():
     return render_template('index.html')
 
+@app.route('/learn')
+def learn():
+    return render_template('learn.html')
+
+@app.route('/practice')
+def practice():
+    return render_template('practice.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 @app.route('/analyze', methods=['POST'])
+libraries
 def analyze():
     """
     Unified endpoint that handles both text and audio analysis with message type and sender info
@@ -72,6 +115,19 @@ def analyze():
         # Analyze the text and sender for fraud (enhanced logic)
         prompt = f"""Analyze this {message_type} message for fraud indicators:
 
+def analyze_text():
+    data = request.json
+    text = data.get('text', '')
+
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+
+    if not bedrock_available or not llm:
+        return jsonify({'error': 'Bedrock service not available. Please check AWS credentials.'}), 503
+
+    prompt = f"""Analyze this text for fraud indicators:
+main
+
 Message Type: {message_type}
 Sender: {sender_info}
 Content: {text}
@@ -83,6 +139,7 @@ Provide:
 4. Simple explanation for beginners
 
 Response:"""
+libraries
         
         if bedrock_available and llm:
             try:
@@ -211,9 +268,26 @@ Explanation: """
     
     return analysis
 
+
+    try:
+        print("➡️ Sending prompt to Bedrock...")
+        response = llm.invoke(prompt)
+        print("✅ Bedrock response received")
+
+        if hasattr(response, 'content'):
+            response = response.content
+        elif isinstance(response, dict) and 'content' in response:
+            response = response['content']
+
+        return jsonify({'analysis': response})
+
+    except Exception as e:
+        print(f"❌ Bedrock error: {e}")
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+main
+
 @app.route('/examples')
 def get_examples():
-    # Sample fraud examples for learning
     examples = [
         {
             'type': 'phishing_email',
@@ -224,9 +298,13 @@ def get_examples():
         },
         {
             'type': 'fake_news',
+libraries
             'text': 'Scientists discover miracle cure that doctors don\'t want you to know about!',
             'sender': 'news@health-miracle.com',
             'message_type': 'email',
+
+            'text': "Scientists discover miracle cure that doctors don't want you to know about!",
+main
             'is_fraud': True
         },
         {

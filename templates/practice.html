@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Practice - TechLit Fraud Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        
+        .navbar { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 1rem 0; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
+        .logo { font-size: 1.8rem; font-weight: bold; color: #333; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links a { text-decoration: none; color: #333; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: #667eea; }
+        
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .page-title { text-align: center; color: white; font-size: 2.5rem; margin-bottom: 3rem; }
+        
+        .quiz-card { background: white; border-radius: 15px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .question { font-size: 1.2rem; margin-bottom: 1.5rem; color: #333; }
+        .text-sample { background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin: 1rem 0; border-left: 4px solid #667eea; font-style: italic; }
+        
+        .options { display: grid; gap: 1rem; margin: 1.5rem 0; }
+        .option { background: #f8f9fa; padding: 1rem; border-radius: 10px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .option:hover { background: #e9ecef; border-color: #667eea; }
+        .option.selected { background: #667eea; color: white; border-color: #667eea; }
+        .option.correct { background: #28a745; color: white; }
+        .option.incorrect { background: #dc3545; color: white; }
+        
+        .btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 12px 30px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.3s; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .result { margin-top: 1rem; padding: 1rem; border-radius: 10px; display: none; }
+        .result.correct { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result.incorrect { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .score { text-align: center; background: white; padding: 2rem; border-radius: 15px; margin-bottom: 2rem; }
+        .score-number { font-size: 3rem; font-weight: bold; color: #667eea; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo"><i class="fas fa-shield-alt"></i> TechLit</div>
+            <ul class="nav-links">
+                <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="/learn"><i class="fas fa-book"></i> Learn</a></li>
+                <li><a href="/practice"><i class="fas fa-dumbbell"></i> Practice</a></li>
+                <li><a href="/about"><i class="fas fa-info-circle"></i> About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-dumbbell"></i> Practice Fraud Detection</h1>
+
+        <div class="score">
+            <h2>Your Score</h2>
+            <div class="score-number" id="score">0/0</div>
+            <p>Keep practicing to improve your fraud detection skills!</p>
+        </div>
+
+        <div id="quiz-container"></div>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="resetQuiz()"><i class="fas fa-redo"></i> Reset Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "Is this email legitimate or fraudulent?",
+                text: "URGENT: Your PayPal account has been limited! Click here immediately to verify your information or your account will be permanently suspended within 24 hours!",
+                options: ["Legitimate", "Fraudulent"],
+                correct: 1,
+                explanation: "This is fraudulent. Red flags: urgency tactics, threats of account suspension, and pressure to click immediately."
+            },
+            {
+                question: "What type of message is this?",
+                text: "Your monthly bank statement is now available. Please log into your account through our official website to view it.",
+                options: ["Legitimate", "Fraudulent"],
+                correct: 0,
+                explanation: "This appears legitimate. It doesn't use urgency tactics or ask for immediate action through links."
+            },
+            {
+                question: "Is this news headline trustworthy?",
+                text: "SHOCKING: Scientists discover miracle weight loss pill that doctors don't want you to know about! Click to see the secret they're hiding!",
+                options: ["Trustworthy", "Fake News"],
+                correct: 1,
+                explanation: "This is fake news. Red flags: sensational language, conspiracy claims, and clickbait tactics."
+            },
+            {
+                question: "How should you respond to this message?",
+                text: "Congratulations! You've won $1,000,000 in our lottery! Send us your bank details to claim your prize immediately!",
+                options: ["Send bank details", "Ignore and delete", "Call the number provided"],
+                correct: 1,
+                explanation: "Always ignore and delete such messages. Legitimate lotteries don't ask for bank details upfront."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = 0;
+
+        function loadQuestion() {
+            if (currentQuestion >= quizData.length) {
+                document.getElementById('quiz-container').innerHTML = 
+                    '<div class="quiz-card"><h2>Quiz Complete!</h2><p>Great job practicing fraud detection. Review the questions to reinforce your learning.</p></div>';
+                return;
+            }
+
+            const question = quizData[currentQuestion];
+            const container = document.getElementById('quiz-container');
+            
+            container.innerHTML = `
+                <div class="quiz-card">
+                    <div class="question">
+                        <strong>Question ${currentQuestion + 1}:</strong> ${question.question}
+                    </div>
+                    <div class="text-sample">${question.text}</div>
+                    <div class="options" id="options-${currentQuestion}">
+                        ${question.options.map((option, index) => 
+                            `<div class="option" onclick="selectOption(${index})" data-index="${index}">${option}</div>`
+                        ).join('')}
+                    </div>
+                    <button class="btn" id="submit-btn" onclick="submitAnswer()" disabled>Submit Answer</button>
+                    <div class="result" id="result-${currentQuestion}"></div>
+                </div>
+            `;
+        }
+
+        function selectOption(index) {
+            const options = document.querySelectorAll(`#options-${currentQuestion} .option`);
+            options.forEach(opt => opt.classList.remove('selected'));
+            options[index].classList.add('selected');
+            document.getElementById('submit-btn').disabled = false;
+            window.selectedAnswer = index;
+        }
+
+        function submitAnswer() {
+            const question = quizData[currentQuestion];
+            const options = document.querySelectorAll(`#options-${currentQuestion} .option`);
+            const result = document.getElementById(`result-${currentQuestion}`);
+            
+            answered++;
+            
+            if (window.selectedAnswer === question.correct) {
+                score++;
+                options[window.selectedAnswer].classList.add('correct');
+                result.className = 'result correct';
+                result.innerHTML = `<i class="fas fa-check-circle"></i> Correct! ${question.explanation}`;
+            } else {
+                options[window.selectedAnswer].classList.add('incorrect');
+                options[question.correct].classList.add('correct');
+                result.className = 'result incorrect';
+                result.innerHTML = `<i class="fas fa-times-circle"></i> Incorrect. ${question.explanation}`;
+            }
+            
+            result.style.display = 'block';
+            document.getElementById('submit-btn').style.display = 'none';
+            
+            // Disable all options
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            
+            updateScore();
+            
+            setTimeout(() => {
+                currentQuestion++;
+                loadQuestion();
+            }, 3000);
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = `${score}/${answered}`;
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            answered = 0;
+            updateScore();
+            loadQuestion();
+        }
+
+        // Initialize quiz
+        loadQuestion();
+    </script>
+</body>
+</html>
