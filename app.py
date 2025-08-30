@@ -1,14 +1,33 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from langchain_aws import BedrockLLM
 import os
 from dotenv import load_dotenv
 import re
+from models import db, User, AnalysisHistory
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scamsense.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-this')
+
+# Initialize extensions
+db.init_app(app)
+jwt = JWTManager(app)
+
+# Create tables
+try:
+    with app.app_context():
+        db.create_all()
+        print("✅ Database tables created successfully")
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}")
 
 # Load config from .env or defaults
 MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "meta.llama3-8b-instruct-v1:0")
@@ -39,8 +58,61 @@ except Exception as e:
 def health_check():
     return jsonify({'status': 'Backend is running', 'port': 8000})
 
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.json
+        print(f"Register request: {data}")
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+        
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already registered'}), 400
+        
+        user = User(email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        
+        access_token = create_access_token(identity=user.id)
+        print(f"User registered successfully: {email}")
+        return jsonify({'access_token': access_token, 'user': user.to_dict()})
+    except Exception as e:
+        print(f"Register error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.json
+        print(f"Login request: {data}")
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+        
+        user = User.query.filter_by(email=email).first()
+        print(f"User found: {user is not None}")
+        
+        if user and user.check_password(password):
+            access_token = create_access_token(identity=user.id)
+            print(f"Login successful: {email}")
+            return jsonify({'access_token': access_token, 'user': user.to_dict()})
+        
+        print(f"Login failed for: {email}")
+        return jsonify({'error': 'Invalid credentials'}), 401
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/analyze', methods=['POST'])
+@jwt_required()
 def analyze_text():
+    user_id = get_jwt_identity()
     data = request.json
     text = data.get('text', '')
 
@@ -70,7 +142,23 @@ Response:"""
     else:
         response = rule_based_analysis(text)
 
+    # Save analysis to history
+    analysis_record = AnalysisHistory(
+        user_id=user_id,
+        text=text,
+        result=response
+    )
+    db.session.add(analysis_record)
+    db.session.commit()
+    
     return jsonify({'analysis': response})
+
+@app.route('/history', methods=['GET'])
+@jwt_required()
+def get_history():
+    user_id = get_jwt_identity()
+    analyses = AnalysisHistory.query.filter_by(user_id=user_id).order_by(AnalysisHistory.created_at.desc()).limit(20).all()
+    return jsonify([analysis.to_dict() for analysis in analyses])
 
 
 def rule_based_analysis(text: str) -> str:
@@ -124,4 +212,5 @@ def get_examples():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+    print("Starting Flask server...")
+    app.run(debug=True, port=8000, host='0.0.0.0')
