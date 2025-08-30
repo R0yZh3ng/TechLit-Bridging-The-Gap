@@ -7,6 +7,7 @@ import Learn from './pages/Learn';
 import Practice from './pages/Practice';
 import About from './pages/About';
 import { getUser } from './utils/auth';
+import { LanguageProvider } from './contexts/LanguageContext';
 import './utils/auth'; // Initialize axios interceptors
 import './App.css';
 
@@ -33,17 +34,19 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="App">
-        <Navbar user={user} />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/learn" element={<Learn />} />
-          <Route path="/practice" element={<Practice />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
-      </div>
-    </Router>
+    <LanguageProvider>
+      <Router>
+        <div className="App">
+          <Navbar user={user} />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/learn" element={<Learn />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/about" element={<About />} />
+          </Routes>
+        </div>
+      </Router>
+    </LanguageProvider>
   );
 }
 

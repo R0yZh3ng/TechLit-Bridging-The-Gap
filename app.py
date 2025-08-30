@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
 
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
@@ -7,11 +7,15 @@ import os
 from dotenv import load_dotenv
 import re
 from models import db, User, AnalysisHistory
+from googletrans import Translator
+from langdetect import detect
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
+translator = Translator()
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scamsense.db'
@@ -58,9 +62,6 @@ except Exception as e:
 import re
 import json
 from datetime import datetime
-
-app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
 
 class ScamAnalyzer:
     def __init__(self):
@@ -269,8 +270,7 @@ class ScamAnalyzer:
 analyzer = ScamAnalyzer()
 
 @app.route('/')
-
-def health_check():
+def home():
     return jsonify({'status': 'Backend is running', 'port': 8000})
 
 @app.route('/register', methods=['POST'])
@@ -324,40 +324,72 @@ def login():
         print(f"Login error: {e}")
         return jsonify({'error': str(e)}), 500
 
+def detect_and_translate(text, target_lang='en'):
+    """Detect language and translate if needed"""
+    try:
+        detected_lang = detect(text)
+        if detected_lang != target_lang:
+            translated = translator.translate(text, src=detected_lang, dest=target_lang)
+            return translated.text, detected_lang
+        return text, detected_lang
+    except:
+        return text, 'en'  # Default to English if detection fails
+
+def translate_response(response, target_lang):
+    """Translate response back to original language"""
+    if target_lang == 'en':
+        return response
+    try:
+        translated = translator.translate(response, src='en', dest=target_lang)
+        return translated.text
+    except:
+        return response  # Return original if translation fails
+
 @app.route('/analyze', methods=['POST'])
-def analyze_text():
-    # Get user_id from Authorization header if present
+def analyze_text_main():
     user_id = None
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
         try:
-            token = auth_header.split(' ')[1]
-            # For now, skip JWT validation to avoid the 422 error
-            # In production, you should properly validate the JWT token
             user_id = 1  # Default user ID for testing
         except:
             pass
     
     data = request.json
     text = data.get('text', '')
-
+    
     if not text:
         return jsonify({'error': 'No text provided'}), 400
+    
+    original_text = text
+    text_for_analysis, detected_lang = detect_and_translate(text, 'en')
+    
+    if bedrock_available and llm:
+        try:
+            prompt = f"Analyze this text for fraud indicators: {text_for_analysis}"
+            response = llm.invoke(prompt)
+            if hasattr(response, 'content'):
+                response = response.content
+            elif isinstance(response, dict) and 'content' in response:
+                response = response['content']
+        except Exception as e:
+            response = rule_based_analysis(text_for_analysis)
+    else:
+        response = rule_based_analysis(text_for_analysis)
+    
+    if detected_lang != 'en':
+        response = translate_response(response, detected_lang)
 
-    prompt = f"""Analyze this text for fraud indicators:
-=======
-def home():
-    return jsonify({
-        'message': 'ScamGuard API is running!',
-        'endpoints': {
-            'health': '/api/health',
-            'analyze_email': '/api/analyze/email',
-            'analyze_text': '/api/analyze/text',
-            'analyze_call': '/api/analyze/call',
-            'analyze_website': '/api/analyze/website',
-            'stats': '/api/stats'
-        }
-    })
+    if user_id:
+        analysis_record = AnalysisHistory(
+            user_id=user_id,
+            text=original_text,
+            result=response
+        )
+        db.session.add(analysis_record)
+        db.session.commit()
+    
+    return jsonify({'result': response})
 
 @app.route('/api/health')
 def health_check():
@@ -366,7 +398,6 @@ def health_check():
         'timestamp': datetime.now().isoformat(),
         'service': 'ScamGuard API'
     })
-
 
 @app.route('/api/analyze/email', methods=['POST'])
 def analyze_email():
@@ -386,7 +417,7 @@ def analyze_email():
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
 @app.route('/api/analyze/text', methods=['POST'])
-def analyze_text():
+def analyze_text_api():
     try:
         data = request.json
         content = data.get('content', '')
@@ -400,32 +431,6 @@ def analyze_text():
     
     except Exception as e:
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
-
-
-Response:"""
-
-    if bedrock_available and llm:
-        try:
-            response = llm.invoke(prompt)
-            if hasattr(response, 'content'):
-                response = response.content
-            elif isinstance(response, dict) and 'content' in response:
-                response = response['content']
-        except Exception as e:
-            response = rule_based_analysis(text)
-    else:
-        response = rule_based_analysis(text)
-
-    # Save analysis to history (if user_id is available)
-    if user_id:
-        analysis_record = AnalysisHistory(
-            user_id=user_id,
-            text=text,
-            result=response
-        )
-        db.session.add(analysis_record)
-        db.session.commit()
-=======
 @app.route('/api/analyze/call', methods=['POST'])
 def analyze_call():
     try:
@@ -497,8 +502,11 @@ def rule_based_analysis(text: str) -> str:
         return "Risk Level: LOW\nWarning Signs: No obvious fraud indicators\nExplanation: Text appears normal, but always verify requests for personal information through official channels."
 
 
-@app.route('/examples')
+@app.route('/api/examples')
 def get_examples():
+    # Get language preference from query parameter
+    lang = request.args.get('lang', 'en')
+    
     examples = [
         {
             'type': 'phishing_email',
@@ -516,6 +524,17 @@ def get_examples():
             'is_fraud': False
         }
     ]
+    
+    # Translate examples if requested language is not English
+    if lang != 'en':
+        for example in examples:
+            try:
+                translated = translator.translate(example['text'], src='en', dest=lang)
+                example['text'] = translated.text
+                example['original_text'] = example['text']
+            except:
+                pass  # Keep original if translation fails
+    
     return jsonify(examples)
 
 @app.route('/api/stats')
@@ -531,12 +550,39 @@ def get_stats():
         'last_updated': datetime.now().isoformat()
     })
 
-
+@app.route('/api/translations/<lang>')
+def get_translations(lang):
+    """Get translations for the specified language"""
+    translations = {
+        'home': 'Home',
+        'learn': 'Learn',
+        'practice': 'Practice',
+        'about': 'About',
+        'logout': 'Logout',
+        'fraud_detection_trainer': 'Fraud Detection Trainer',
+        'learn_to_identify': 'Learn to identify fraudulent emails and news articles with AI-powered analysis',
+        'text_analyzer': 'Text Analyzer',
+        'paste_suspicious': 'Paste suspicious text below for instant fraud analysis:',
+        'placeholder': 'Paste email or news text here...',
+        'analyze_button': 'Analyze for Fraud',
+        'analyzing': 'Analyzing...',
+        'practice_examples': 'Practice Examples'
+    }
+    
+    if lang == 'en':
+        return jsonify(translations)
+    
+    try:
+        translated = {}
+        for key, text in translations.items():
+            result = translator.translate(text, src='en', dest=lang)
+            translated[key] = result.text
+        return jsonify(translated)
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return jsonify(translations)  # Return English if translation fails
 
 if __name__ == '__main__':
-
     print("Starting Flask server...")
     app.run(debug=True, port=8000, host='0.0.0.0')
-
-    app.run(host='0.0.0.0', port=5000, debug=True)
 

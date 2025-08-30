@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function Home() {
+  const { language, t } = useLanguage();
   const [text, setText] = useState('');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -9,7 +11,7 @@ function Home() {
 
   useEffect(() => {
     loadExamples();
-  }, []);
+  }, [language]);
 
   const analyzeText = async () => {
     if (!text) return;
@@ -29,7 +31,7 @@ function Home() {
 
   const loadExamples = async () => {
     try {
-      const response = await axios.get('/examples');
+      const response = await axios.get(`/api/examples?lang=${language}`);
       setExamples(response.data);
     } catch (error) {
       console.error('Error loading examples:', error);
@@ -44,27 +46,27 @@ function Home() {
   return (
     <>
       <div className="hero">
-        <h1><i className="fas fa-search"></i> Fraud Detection Trainer</h1>
-        <p>Learn to identify fraudulent emails and news articles with AI-powered analysis</p>
+        <h1><i className="fas fa-search"></i> {t('fraud_detection_trainer')}</h1>
+        <p>{t('learn_to_identify')}</p>
       </div>
 
       <div className="container">
         <div className="analyzer-card">
-          <h2><i className="fas fa-microscope"></i> Text Analyzer</h2>
-          <p>Paste suspicious text below for instant fraud analysis:</p>
+          <h2><i className="fas fa-microscope"></i> {t('text_analyzer')}</h2>
+          <p>{t('paste_suspicious')}</p>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Paste email or news text here..."
+            placeholder={t('placeholder')}
           />
           <br /><br />
           <button className="btn" onClick={analyzeText}>
-            <i className="fas fa-search"></i> Analyze for Fraud
+            <i className="fas fa-search"></i> {t('analyze_button')}
           </button>
           
           {loading && (
             <div className="loading">
-              <i className="fas fa-spinner fa-spin"></i> Analyzing...
+              <i className="fas fa-spinner fa-spin"></i> {t('analyzing')}
             </div>
           )}
           
@@ -76,7 +78,7 @@ function Home() {
         </div>
 
         <h2 className="section-title">
-          <i className="fas fa-lightbulb"></i> Practice Examples
+          <i className="fas fa-lightbulb"></i> {t('practice_examples')}
         </h2>
         
         <div className="examples-grid">
@@ -93,8 +95,8 @@ function Home() {
               <p>{example.text}</p>
               <small>
                 {example.is_fraud 
-                  ? 'Click to analyze this fraud example' 
-                  : 'Click to analyze this legitimate example'
+                  ? t('click_to_analyze_fraud')
+                  : t('click_to_analyze_safe')
                 }
               </small>
             </div>

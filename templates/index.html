@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ScamSense - Fraud Detection Trainer</title>
+    <title>{{ get_text('title') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,9 +11,15 @@
         .navbar { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 1rem 0; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
         .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
         .logo { font-size: 1.8rem; font-weight: bold; color: #333; }
-        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; align-items: center; }
         .nav-links a { text-decoration: none; color: #333; font-weight: 500; transition: color 0.3s; }
         .nav-links a:hover { color: #667eea; }
+        .language-selector { position: relative; }
+        .language-btn { background: none; border: 1px solid #ddd; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .language-dropdown { position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; min-width: 120px; z-index: 1000; }
+        .language-dropdown a { display: block; padding: 8px 12px; color: #333; text-decoration: none; }
+        .language-dropdown a:hover { background: #f5f5f5; }
+        .language-selector:hover .language-dropdown { display: block; }
         
         .hero { text-align: center; padding: 4rem 2rem; color: white; }
         .hero h1 { font-size: 3rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
@@ -44,31 +50,46 @@
         <div class="nav-container">
             <div class="logo"><i class="fas fa-shield-alt"></i> ScamSense</div>
             <ul class="nav-links">
-                <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
-                <li><a href="/learn"><i class="fas fa-book"></i> Learn</a></li>
-                <li><a href="/practice"><i class="fas fa-dumbbell"></i> Practice</a></li>
-                <li><a href="/about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="/"><i class="fas fa-home"></i> {{ get_text('home') }}</a></li>
+                <li><a href="/learn"><i class="fas fa-book"></i> {{ get_text('learn') }}</a></li>
+                <li><a href="/practice"><i class="fas fa-dumbbell"></i> {{ get_text('practice') }}</a></li>
+                <li><a href="/about"><i class="fas fa-info-circle"></i> {{ get_text('about') }}</a></li>
+                <li class="language-selector">
+                    <button class="language-btn"><i class="fas fa-globe"></i> {{ lang.upper() }}</button>
+                    <div class="language-dropdown">
+                        <a href="/set_language/en">🇺🇸 English</a>
+                        <a href="/set_language/es">🇪🇸 Español</a>
+                        <a href="/set_language/fr">🇫🇷 Français</a>
+                        <a href="/set_language/de">🇩🇪 Deutsch</a>
+                        <a href="/set_language/zh">🇨🇳 中文</a>
+                        <a href="/set_language/ja">🇯🇵 日本語</a>
+                        <a href="/set_language/ko">🇰🇷 한국어</a>
+                        <a href="/set_language/pt">🇧🇷 Português</a>
+                        <a href="/set_language/ru">🇷🇺 Русский</a>
+                        <a href="/set_language/ar">🇸🇦 العربية</a>
+                    </div>
+                </li>
             </ul>
         </div>
     </nav>
 
     <div class="hero">
-        <h1><i class="fas fa-search"></i> Fraud Detection Trainer</h1>
-        <p>Learn to identify fraudulent emails and news articles with AI-powered analysis</p>
+        <h1><i class="fas fa-search"></i> {{ get_text('fraud_detection_trainer') }}</h1>
+        <p>{{ get_text('learn_to_identify') }}</p>
     </div>
 
     <div class="container">
         <div class="analyzer-card">
-            <h2><i class="fas fa-microscope"></i> Text Analyzer</h2>
-            <p>Paste suspicious text below for instant fraud analysis:</p>
-            <textarea id="textInput" placeholder="Paste email or news text here..."></textarea>
+            <h2><i class="fas fa-microscope"></i> {{ get_text('text_analyzer') }}</h2>
+            <p>{{ get_text('paste_suspicious') }}</p>
+            <textarea id="textInput" placeholder="{{ get_text('placeholder') }}"></textarea>
             <br><br>
-            <button class="btn" onclick="analyzeText()"><i class="fas fa-search"></i> Analyze for Fraud</button>
-            <div class="loading" id="loading"><i class="fas fa-spinner fa-spin"></i> Analyzing...</div>
+            <button class="btn" onclick="analyzeText()"><i class="fas fa-search"></i> {{ get_text('analyze_button') }}</button>
+            <div class="loading" id="loading"><i class="fas fa-spinner fa-spin"></i> {{ get_text('analyzing') }}</div>
             <div id="result"></div>
         </div>
 
-        <h2 class="section-title"><i class="fas fa-lightbulb"></i> Practice Examples</h2>
+        <h2 class="section-title"><i class="fas fa-lightbulb"></i> {{ get_text('practice_examples') }}</h2>
         <div class="examples-grid" id="examples"></div>
     </div>
 
@@ -93,7 +114,7 @@
         }
         
         async function loadExamples() {
-            const response = await fetch('/examples');
+            const response = await fetch('/examples?lang={{ lang }}');
             const examples = await response.json();
             
             const container = document.getElementById('examples');
@@ -101,7 +122,7 @@
                 `<div class="example ${ex.is_fraud ? 'fraud' : 'safe'}" onclick="document.getElementById('textInput').value='${ex.text}'; document.getElementById('textInput').scrollIntoView();">
                     <h3><i class="fas ${ex.is_fraud ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${ex.type.replace('_', ' ').toUpperCase()}</h3>
                     <p>${ex.text}</p>
-                    <small>${ex.is_fraud ? 'Click to analyze this fraud example' : 'Click to analyze this legitimate example'}</small>
+                    <small>${ex.is_fraud ? '{{ get_text("click_to_analyze_fraud") }}' : '{{ get_text("click_to_analyze_safe") }}'}</small>
                 </div>`
             ).join('');
         }
