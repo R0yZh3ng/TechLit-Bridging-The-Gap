@@ -3,12 +3,12 @@ import React from 'react';
 function About() {
   return (
     <div className="container">
-      <h1 className="page-title"><i className="fas fa-info-circle"></i> About TechLit</h1>
+      <h1 className="page-title"><i className="fas fa-info-circle"></i> About ScamSense</h1>
 
       <div className="about-card">
         <h2 className="section-title"><i className="fas fa-bullseye"></i> Our Mission</h2>
         <div className="content">
-          <p>TechLit is dedicated to bridging the digital divide by empowering users with the knowledge and tools to identify fraudulent content. In an age where misinformation and scams are increasingly sophisticated, we believe everyone deserves access to fraud detection education.</p>
+          <p>ScamSense is dedicated to bridging the digital divide by empowering users with the knowledge and tools to identify fraudulent content. In an age where misinformation and scams are increasingly sophisticated, we believe everyone deserves access to fraud detection education.</p>
           <p>Our platform combines cutting-edge AI technology with educational content to help users develop critical thinking skills for the digital age.</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ function About() {
       <div className="about-card">
         <h2 className="section-title"><i className="fas fa-heart"></i> Get Involved</h2>
         <div className="content">
-          <p>Help us bridge the digital divide! Share TechLit with friends and family who could benefit from fraud detection education. Together, we can create a safer digital environment for everyone.</p>
+          <p>Help us bridge the digital divide! Share ScamSense with friends and family who could benefit from fraud detection education. Together, we can create a safer digital environment for everyone.</p>
           <p><strong>Remember:</strong> When in doubt, always verify information through official channels and trusted sources.</p>
         </div>
       </div>

@@ -3,3 +3,7 @@ langchain-aws
 python-dotenv
 boto3
 flask-cors
+flask-sqlalchemy
+flask-jwt-extended
+werkzeug
+bcrypt
